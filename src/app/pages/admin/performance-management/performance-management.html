@@ -1,0 +1,191 @@
+<!-- performance-management.component.html -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+  <!-- Main Content Area -->
+  <main class="flex-1 overflow-y-auto p-8 bg-gray-50">
+    <!-- Page Header with Actions -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Performance Metrics</h1>
+        <p class="text-gray-600">Track and analyze team and individual performance metrics</p>
+      </div>
+      <div class="mt-4 md:mt-0 flex space-x-3">
+        <div class="filter-dropdown relative">
+          <button 
+            (click)="toggleFilterDropdown()"
+            class="flex items-center space-x-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50">
+            <i class="fas fa-filter"></i>
+            <span>Filters</span>
+            <i class="fas fa-chevron-down text-xs"></i>
+          </button>
+          <div 
+            [class.hidden]="!filterDropdownOpen"
+            class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10">
+            <div class="p-4 space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
+                <select 
+                  [(ngModel)]="selectedTimePeriod"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                  <option value="7">Last 7 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="90">Last Quarter</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Team</label>
+                <select 
+                  [(ngModel)]="selectedTeam"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                  <option value="">All Teams</option>
+                  <option value="development">Development</option>
+                  <option value="design">Design</option>
+                  <option value="marketing">Marketing</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Metric</label>
+                <select 
+                  [(ngModel)]="selectedMetric"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                  <option value="completion">Completion Rate</option>
+                  <option value="tasks">Tasks Completed</option>
+                  <option value="delivery">On-Time Delivery</option>
+                  <option value="productivity">Productivity</option>
+                </select>
+              </div>
+              <div class="flex space-x-2">
+                <button 
+                  (click)="applyFilters()"
+                  class="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 text-sm">
+                  Apply
+                </button>
+                <button 
+                  (click)="resetFilters()"
+                  class="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-50 text-sm">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button 
+          (click)="exportData()"
+          class="flex items-center space-x-2 bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700">
+          <i class="fas fa-download"></i>
+          <span>Export</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div 
+        *ngFor="let stat of statCards"
+        class="stat-card bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500">{{ stat.title }}</p>
+            <p class="text-2xl font-bold mt-1">{{ stat.value }}</p>
+            <p class="text-xs mt-1 flex items-center"
+               [ngClass]="stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'">
+              <i [class]="'fas ' + (stat.changeType === 'positive' ? 'fa-arrow-up' : 'fa-arrow-down') + ' mr-1'"></i>
+              {{ stat.change }}
+            </p>
+          </div>
+          <div class="p-3 rounded-full text-xl" [ngClass]="[stat.bgColor, stat.textColor]">
+            <i [class]="'fas ' + stat.icon"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Performance Sections -->
+    <div class="space-y-8">
+      <!-- Team Performance Trends -->
+      <div class="performance-card bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-semibold text-gray-800">Team Performance Trends</h3>
+            <p class="text-sm text-gray-500">Weekly performance metrics by team</p>
+          </div>
+          <div class="mt-2 md:mt-0">
+            <select 
+              (change)="onPerformanceTimeRangeChange($event)"
+              class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+              <option value="4">Last 4 Weeks</option>
+              <option value="8">Last 8 Weeks</option>
+              <option value="12">This Quarter</option>
+            </select>
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas #performanceChart></canvas>
+        </div>
+      </div>
+
+      <!-- Team Comparison -->
+      <div class="performance-card bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-semibold text-gray-800">Team Comparison</h3>
+            <p class="text-sm text-gray-500">Current performance metrics by department</p>
+          </div>
+          <div class="mt-2 md:mt-0">
+            <select 
+              (change)="onTeamMetricChange($event)"
+              class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+              <option value="completion">Completion Rate</option>
+              <option value="volume">Task Volume</option>
+              <option value="delivery">On-Time Delivery</option>
+            </select>
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas #teamChart></canvas>
+        </div>
+      </div>
+
+      <!-- Detailed Metrics Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Top Performers -->
+        <div class="performance-card bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg">
+          <div class="mb-6">
+            <h3 class="text-xl font-semibold text-gray-800">Top Performers</h3>
+            <p class="text-sm text-gray-500">Highest performing team members</p>
+          </div>
+          <div class="space-y-4">
+            <div 
+              *ngFor="let performer of topPerformers"
+              class="flex items-center">
+              <div class="team-avatar" [ngClass]="[performer.avatarBg, performer.avatarText]">
+                {{ performer.initials }}
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="font-medium">{{ performer.name }}</p>
+                <div class="flex items-center text-sm text-gray-500">
+                  <span>{{ performer.team }}</span>
+                  <span class="mx-2">•</span> 
+                  <span class="text-green-600 font-medium">{{ performer.performance }}</span>
+                </div>
+              </div>
+              <div class="font-medium" [ngClass]="performer.rankColor">{{ performer.rank }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Performance Distribution -->
+        <div class="performance-card bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-lg">
+          <div class="mb-6">
+            <h3 class="text-xl font-semibold text-gray-800">Performance Distribution</h3>
+            <p class="text-sm text-gray-500">Team member performance levels</p>
+          </div>
+          <div class="h-64">
+            <canvas #performanceDistributionChart></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

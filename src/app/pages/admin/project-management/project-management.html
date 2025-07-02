@@ -1,0 +1,1198 @@
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+  <!-- Tabs Navigation -->
+  <div class="flex border-b border-gray-200 mb-6">
+    <button 
+      class="tab-button px-4 py-2 text-sm font-medium" 
+      [class.active]="activeTab === 'projects'"
+      (click)="setActiveTab('projects')">
+      Projects
+    </button>
+    <button 
+      class="tab-button px-4 py-2 text-sm font-medium" 
+      [class.active]="activeTab === 'sprints'"
+      (click)="setActiveTab('sprints')">
+      Sprints
+    </button>
+    <button 
+      class="tab-button px-4 py-2 text-sm font-medium" 
+      [class.active]="activeTab === 'team-projects'"
+      (click)="setActiveTab('team-projects')">
+      Team Projects
+    </button>
+  </div>
+
+  <!-- Projects Tab Content -->
+  <div *ngIf="activeTab === 'projects'" class="tab-content active">
+    <!-- Search, Filter and Add Project -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"> 
+      <div class="relative w-full md:w-64">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <fa-icon [icon]="faSearch" class="text-gray-400 text-sm"></fa-icon>
+        </div>
+        <input 
+          type="text" 
+          [(ngModel)]="searchProjectsTerm"
+          (ngModelChange)="applyProjectsFilters()"
+          class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+          placeholder="Search projects..."> 
+      </div>
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <div class="relative">
+          <button 
+            id="filterProjectsBtn" 
+            class="flex items-center gap-1 bg-white hover:bg-gray-50 text-gray-700 py-2 px-3 rounded-lg border border-gray-300 text-sm"
+            (click)="filterProjectsDropdown = !filterProjectsDropdown">
+            <fa-icon [icon]="faFilter" class="mr-1"></fa-icon>
+            Filter
+          </button>
+          <div 
+            id="projectsFilterDropdown" 
+            class="filter-dropdown" 
+            [class.open]="filterProjectsDropdown">
+            <div class="space-y-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                <select 
+                  [(ngModel)]="statusFilter"
+                  class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">All Statuses</option>
+                  <option value="planning">Planning</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="on-hold">On Hold</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Priority</label>
+                <select 
+                  [(ngModel)]="priorityFilter"
+                  class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">All Priorities</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Team</label>
+                <select 
+                  [(ngModel)]="teamFilter"
+                  class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">All Teams</option>
+                  <option value="Development Team">Development Team</option>
+                  <option value="Design Team">Design Team</option>
+                  <option value="Marketing Team">Marketing Team</option>
+                </select>
+              </div>
+              <div class="flex justify-end gap-1">
+                <button 
+                  (click)="resetProjectsFilters(); filterProjectsDropdown = false"
+                  class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800">
+                  Reset
+                </button>
+                <button 
+                  (click)="applyProjectsFilters(); filterProjectsDropdown = false"
+                  class="px-2 py-1 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700">
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button 
+          (click)="openAddProjectModal()"
+          class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+          <fa-icon [icon]="faPlus" class="mr-2"></fa-icon> New Project
+        </button>
+      </div>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-4">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let project of filteredProjects" class="table-row">
+              <td class="px-6 py-3 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="text-sm font-medium text-gray-900">{{ project.name }}</div>
+                  <fa-icon 
+                    [icon]="project.priority === 'high' ? faExclamationCircle : 
+                            project.priority === 'medium' ? faExclamationTriangle : faInfoCircle"
+                    [ngClass]="getPriorityIcon(project.priority)"
+                    class="ml-1 text-xs"></fa-icon>
+                </div>
+              </td>
+              <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ project.team }}</td>
+              <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ formatDate(project.startDate) }}</td>
+              <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ formatDate(project.deadline) }}</td>
+              <td class="px-6 py-3 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-20 mr-2">
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                      <div class="bg-indigo-600 h-1.5 rounded-full" [style.width]="project.progress + '%'"></div>
+                    </div>
+                  </div>
+                  <span class="text-xs text-gray-500">{{ project.progress }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-3 whitespace-nowrap">
+                <span class="status-badge" [ngClass]="getStatusClass(project.status)">
+                  {{ project.status.replace('-', ' ') }}
+                </span>
+              </td>
+              <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
+                <button 
+                  (click)="viewProjectDetails(project.id)"
+                  class="text-indigo-600 hover:text-indigo-900 mr-2">View</button>
+                <button 
+                  (click)="editProject(project.id)"
+                  class="text-gray-600 hover:text-gray-900">Edit</button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredProjects.length === 0">
+              <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No projects found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-2 py-3">
+      <div class="text-sm text-gray-500">
+        Showing {{ (currentProjectsPage - 1) * projectsPerPage + 1 }} to 
+        {{ Math.min(currentProjectsPage * projectsPerPage, filteredProjects.length) }} of 
+        {{ filteredProjects.length }} entries
+      </div>
+      <div class="flex space-x-1">
+        <button 
+          class="pagination-btn" 
+          [disabled]="currentProjectsPage === 1"
+          (click)="currentProjectsPage = currentProjectsPage - 1">
+          Previous
+        </button>
+        
+        <ng-container *ngFor="let page of getPagesArray()">
+          <button 
+            class="pagination-btn" 
+            [class.active]="page === currentProjectsPage"
+            (click)="currentProjectsPage = page">
+            {{ page }}
+          </button>
+        </ng-container>
+        
+        <button 
+          class="pagination-btn" 
+          [disabled]="currentProjectsPage * projectsPerPage >= filteredProjects.length"
+          (click)="currentProjectsPage = currentProjectsPage + 1">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sprints Tab Content -->
+  <div *ngIf="activeTab === 'sprints'" class="tab-content">
+    <!-- Search, Filter and Add Sprint -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"> 
+      <div class="relative w-full md:w-64">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <fa-icon [icon]="faSearch" class="text-gray-400 text-sm"></fa-icon>
+        </div>
+        <input 
+          type="text" 
+          [(ngModel)]="searchSprintsTerm"
+          (ngModelChange)="applySprintsFilters()"
+          class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+          placeholder="Search sprints..."> 
+      </div>
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <div class="relative">
+          <button 
+            id="filterSprintsBtn" 
+            class="flex items-center gap-1 bg-white hover:bg-gray-50 text-gray-700 py-2 px-3 rounded-lg border border-gray-300 text-sm"
+            (click)="filterSprintsDropdown = !filterSprintsDropdown">
+            <fa-icon [icon]="faFilter" class="mr-1"></fa-icon>
+            Filter
+          </button>
+          <div 
+            id="sprintsFilterDropdown" 
+            class="filter-dropdown" 
+            [class.open]="filterSprintsDropdown">
+            <div class="space-y-2">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                <select 
+                  [(ngModel)]="sprintStatusFilter"
+                  class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Project</label>
+                <select 
+                  [(ngModel)]="sprintProjectFilter"
+                  class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">All Projects</option>
+                  <option *ngFor="let project of projects" [value]="project.name">{{ project.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Due Date</label>
+                <select 
+                  [(ngModel)]="sprintDueDateFilter"
+                  class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </div>
+              <div class="flex justify-end gap-1">
+                <button 
+                  (click)="resetSprintsFilters(); filterSprintsDropdown = false"
+                  class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800">
+                  Reset
+                </button>
+                <button 
+                  (click)="applySprintsFilters(); filterSprintsDropdown = false"
+                  class="px-2 py-1 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700">
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button 
+          (click)="openAddSprintModal()"
+          class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+          <fa-icon [icon]="faPlus" class="mr-2"></fa-icon> New Sprint
+        </button>
+      </div>
+    </div>
+
+    <!-- Sprints List -->
+    <div class="space-y-4">
+      <div 
+        *ngFor="let sprint of filteredSprints"
+        class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden"
+        [ngClass]="getStatusClass(sprint.status)">
+        <div class="p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-sm font-medium text-gray-900">{{ sprint.name }}</h3>
+              <p class="text-xs text-gray-500 mt-1">{{ sprint.project }}</p>
+            </div>
+            <span 
+              class="text-xs px-2 py-1 rounded-full"
+              [ngClass]="{
+                'bg-green-100 text-green-800': sprint.status === 'completed',
+                'bg-blue-100 text-blue-800': sprint.status === 'active',
+                'bg-yellow-100 text-yellow-800': sprint.status === 'upcoming'
+              }">
+              {{ sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1) }}
+            </span>
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <p class="text-gray-500">Start Date</p>
+              <p class="text-gray-900">{{ formatDate(sprint.startDate) }}</p>
+            </div>
+            <div>
+              <p class="text-gray-500">End Date</p>
+              <p class="text-gray-900">{{ formatDate(sprint.endDate) }}</p>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p class="text-xs text-gray-500">Sprint Goal</p>
+            <p class="text-xs text-gray-700 mt-1">{{ sprint.goal }}</p>
+          </div>
+          <div class="mt-4 flex justify-between items-center">
+            <div class="flex items-center">
+              <div class="w-16 mr-2">
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    class="bg-indigo-600 h-1.5 rounded-full" 
+                    [style.width]="(sprint.stats.tasksCompleted / sprint.stats.totalTasks) * 100 + '%'"></div>
+                </div>
+              </div>
+              <span class="text-xs text-gray-500">{{ sprint.stats.tasksCompleted }}/{{ sprint.stats.totalTasks }} tasks</span>
+            </div>
+            <div class="flex space-x-2">
+              <button 
+                (click)="viewSprintDetails(sprint.id)"
+                class="text-xs text-indigo-600 hover:text-indigo-900">View</button>
+              <button 
+                (click)="editSprint(sprint.id)"
+                class="text-xs text-gray-600 hover:text-gray-900">Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="filteredSprints.length === 0" class="text-center text-sm text-gray-500 py-4">
+        No sprints found
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Projects Tab Content -->
+  <div *ngIf="activeTab === 'team-projects'" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Team Projects -->
+      <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Team Projects</h3>
+          <button 
+            (click)="openCreateTeamProjectModal()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg text-sm">
+            Create Team Project
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let project of projects" class="hover:bg-gray-50">
+                <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ project.name }}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ project.team }}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ formatDate(project.startDate) }}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ formatDate(project.deadline) }}</td>
+                <td class="px-6 py-3 whitespace-nowrap">
+                  <span class="status-badge" [ngClass]="getStatusClass(project.status)">
+                    {{ project.status.replace('-', ' ') }}
+                  </span>
+                </td>
+                <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
+                  <button 
+                    (click)="viewProjectDetails(project.id)"
+                    class="text-indigo-600 hover:text-indigo-900">View</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Team Leads Status -->
+      <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Team Leads Status</h3>
+        <div class="space-y-4">
+          <!-- Development Team -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-sm font-medium text-gray-700">Development Team</h4>
+              <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">3 Projects</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                  <span class="text-xs text-gray-600">JD</span>
+                </div>
+                <span class="text-sm">John Doe</span>
+              </div>
+              <span class="text-xs team-lead-busy">Busy</span>
+            </div>
+          </div>
+          
+          <!-- Design Team -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-sm font-medium text-gray-700">Design Team</h4>
+              <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">1 Project</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                  <span class="text-xs text-gray-600">JS</span>
+                </div>
+                <span class="text-sm">Jane Smith</span>
+              </div>
+              <span class="text-xs team-lead-available">Available</span>
+            </div>
+          </div>
+          
+          <!-- Marketing Team -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-sm font-medium text-gray-700">Marketing Team</h4>
+              <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">2 Projects</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                  <span class="text-xs text-gray-600">ED</span>
+                </div>
+                <span class="text-sm">Emily Davis</span>
+              </div>
+              <span class="text-xs team-lead-busy">Busy</span>
+            </div>
+          </div>
+          
+          <!-- Quick Assign -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Quick Assign</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Select Team</label>
+                <select class="block w-full px-3 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">Select Team</option>
+                  <option value="development">Development Team</option>
+                  <option value="design">Design Team</option>
+                  <option value="marketing">Marketing Team</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Select Project</label>
+                <select class="block w-full px-3 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                  <option value="">Select Project</option>
+                  <option *ngFor="let project of projects" [value]="project.id">{{ project.name }}</option>
+                </select>
+              </div>
+              <div class="hidden">
+                <p class="text-xs text-gray-500 mb-1">Team Lead Status: <span class="font-medium"></span></p>
+                <p class="text-xs text-gray-500"></p>
+              </div>
+              <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg text-sm">
+                Assign Project
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Add Project Modal -->
+<div *ngIf="showAddProjectModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Create New Project</h3>
+        <button (click)="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-base">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <form>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Project Name</label>
+            <input type="text" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Description</label>
+            <textarea rows="3" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Start Date</label>
+              <input type="date" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">End Date</label>
+              <input type="date" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Assigned Team</label>
+              <select required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="">Select Team</option>
+                <option value="Development Team">Development Team</option>
+                <option value="Design Team">Design Team</option>
+                <option value="Marketing Team">Marketing Team</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Priority</label>
+              <select class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Project Manager</label>
+            <select required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+              <option value="">Select Project Manager</option>
+              <option value="John Doe">John Doe</option>
+              <option value="Jane Smith">Jane Smith</option>
+              <option value="Mike Johnson">Mike Johnson</option>
+              <option value="Emily Davis">Emily Davis</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Budget ($)</label>
+            <input type="number" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" min="0" value="10000">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Project Files</label>
+            <input type="file" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" multiple>
+            <p class="mt-1 text-xs text-gray-500">Upload any relevant files for this project (PDF, DOC, XLS, etc.)</p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button type="button" (click)="closeAllModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+              Create Project
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Sprint Modal -->
+<div *ngIf="showAddSprintModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Create New Sprint</h3>
+        <button (click)="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-base">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <form>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Sprint Name</label>
+            <input type="text" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Description (Optional)</label>
+            <textarea rows="3" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Project</label>
+              <select required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="">Select Project</option>
+                <option *ngFor="let project of projects" [value]="project.name">{{ project.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Status</label>
+              <select class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="upcoming">Upcoming</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Start Date</label>
+              <input type="date" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">End Date</label>
+              <input type="date" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Sprint Goal</label>
+            <textarea rows="2" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Add Tasks (Optional)</label>
+            <select multiple class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+              <option value="Design Homepage">Design Homepage</option>
+              <option value="Develop Frontend">Develop Frontend</option>
+              <option value="API Integration">API Integration</option>
+              <option value="Content Migration">Content Migration</option>
+              <option value="UI Design">UI Design</option>
+              <option value="Backend Setup">Backend Setup</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple tasks</p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button type="button" (click)="closeAllModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+              Create Sprint
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Create Team Project Modal -->
+<div *ngIf="showCreateTeamProjectModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Create Team Project</h3>
+        <button (click)="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-base">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <form>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Project Name</label>
+            <input type="text" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Description</label>
+            <textarea rows="3" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Start Date</label>
+              <input type="date" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">End Date</label>
+              <input type="date" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Assigned Team</label>
+              <select required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="">Select Team</option>
+                <option value="development">Development Team</option>
+                <option value="design">Design Team</option>
+                <option value="marketing">Marketing Team</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Priority</label>
+              <select class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Project Manager</label>
+            <select required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+              <option value="">Select Project Manager</option>
+              <option value="john">John Doe</option>
+              <option value="jane">Jane Smith</option>
+              <option value="mike">Mike Johnson</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500"></p>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Project Files</label>
+            <input type="file" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" multiple>
+            <p class="mt-1 text-xs text-gray-500">Upload any relevant files for this project (PDF, DOC, XLS, etc.)</p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button type="button" (click)="closeAllModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+              Create Project
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Project Details Modal -->
+<div *ngIf="showProjectDetailsModal && currentProject" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">{{ currentProject.name }}</h3>
+        <button (click)="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-base">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="w-full md:w-2/3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Project ID</label>
+              <p class="text-sm mt-1 font-medium">{{ currentProject.id }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Status</label>
+              <p class="text-sm mt-1" [ngClass]="{
+                'text-green-600': currentProject.status === 'completed',
+                'text-blue-600': currentProject.status === 'in-progress',
+                'text-yellow-600': currentProject.status === 'planning',
+                'text-gray-600': currentProject.status === 'on-hold'
+              }">
+                {{ currentProject.status.replace('-', ' ').charAt(0).toUpperCase() + currentProject.status.replace('-', ' ').slice(1) }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Start Date</label>
+              <p class="text-sm mt-1">{{ formatDate(currentProject.startDate) }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Deadline</label>
+              <p class="text-sm mt-1">{{ formatDate(currentProject.deadline) }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Project Manager</label>
+              <p class="text-sm mt-1">{{ currentProject.manager }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Assigned Team</label>
+              <p class="text-sm mt-1">{{ currentProject.team }}</p>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500">Description</label>
+            <p class="text-sm mt-1">{{ currentProject.description }}</p>
+          </div>
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-medium text-gray-500">Progress</label>
+              <span class="text-xs font-medium">{{ currentProject.progress }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-1.5">
+              <div class="bg-indigo-600 h-1.5 rounded-full" [style.width]="currentProject.progress + '%'"></div>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Project Files</label>
+            <div class="border border-gray-200 rounded-lg p-3">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center">
+                  <i class="fas fa-file-pdf text-red-500 text-sm mr-2"></i>
+                  <span class="text-xs">Project_Specifications.pdf</span>
+                </div>
+                <div class="flex space-x-2">
+                  <button class="text-xs text-indigo-600 hover:text-indigo-800">Download</button>
+                  <button class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <i class="fas fa-file-word text-blue-500 text-sm mr-2"></i>
+                  <span class="text-xs">Requirements_Document.docx</span>
+                </div>
+                <div class="flex space-x-2">
+                  <button class="text-xs text-indigo-600 hover:text-indigo-800">Download</button>
+                  <button class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1">Upload New Files</label>
+              <input type="file" class="block w-full px-3 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" multiple>
+            </div>
+          </div>
+        </div>
+        <div class="w-full md:w-1/3">
+          <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <h4 class="text-sm font-medium text-gray-800 mb-3">Project Statistics</h4>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Tasks Completed</span>
+                  <span>{{ currentProject.stats.tasksCompleted }}/{{ currentProject.stats.totalTasks }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-green-500 h-1.5 rounded-full" 
+                       [style.width]="(currentProject.stats.tasksCompleted / currentProject.stats.totalTasks) * 100 + '%'"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Time Spent</span>
+                  <span>{{ currentProject.stats.timeSpent }} / {{ currentProject.stats.estimatedTime }} hours</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-blue-500 h-1.5 rounded-full" 
+                       [style.width]="(currentProject.stats.timeSpent / currentProject.stats.estimatedTime) * 100 + '%'"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Budget Used</span>
+                  <span>${{ currentProject.stats.budgetUsed }} / ${{ currentProject.stats.totalBudget }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-purple-500 h-1.5 rounded-full" 
+                       [style.width]="(currentProject.stats.budgetUsed / currentProject.stats.totalBudget) * 100 + '%'"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <h4 class="text-sm font-medium text-gray-800 mb-3">Team Members</h4>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  {{ getInitials(currentProject.manager) }}
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">{{ currentProject.manager }}</p>
+                  <p class="text-xs text-gray-500">Project Manager</p>
+                </div>
+              </div>
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  JS
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">Jane Smith</p>
+                  <p class="text-xs text-gray-500">UI/UX Designer</p>
+                </div>
+              </div>
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  MJ
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">Mike Johnson</p>
+                  <p class="text-xs text-gray-500">Frontend Developer</p>
+                </div>
+              </div>
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  SW
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">Sarah Williams</p>
+                  <p class="text-xs text-gray-500">Backend Developer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-sm font-medium text-gray-800">Sprints</h4>
+              <button class="text-xs text-indigo-600 hover:text-indigo-800">View All</button>
+            </div>
+            <div class="space-y-2">
+              <div *ngFor="let sprint of currentProject.sprints" class="flex items-center justify-between text-xs">
+                <span>{{ sprint.name }}</span>
+                <span class="px-2 py-1 rounded-full" 
+                      [ngClass]="{
+                        'bg-green-100 text-green-800': sprint.status === 'completed',
+                        'bg-blue-100 text-blue-800': sprint.status === 'active',
+                        'bg-yellow-100 text-yellow-800': sprint.status === 'upcoming'
+                      }">
+                  {{ sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1) }}
+                </span>
+              </div>
+              <div *ngIf="currentProject.sprints.length === 0" class="text-xs text-gray-500">
+                No sprints yet
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button (click)="deleteProject()" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700">
+          Delete Project
+        </button>
+        <button (click)="editProject(currentProject.id)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+          Edit Project
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div *ngIf="showEditProjectModal && currentProject" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Edit Project</h3>
+        <button (click)="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-base">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <form>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Project Name</label>
+            <input type="text" [(ngModel)]="currentProject.name" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Description</label>
+            <textarea [(ngModel)]="currentProject.description" rows="3" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Start Date</label>
+              <input type="date" [(ngModel)]="currentProject.startDate" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">End Date</label>
+              <input type="date" [(ngModel)]="currentProject.deadline" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 required-field">Assigned Team</label>
+              <select [(ngModel)]="currentProject.team" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="">Select Team</option>
+                <option value="Development Team">Development Team</option>
+                <option value="Design Team">Design Team</option>
+                <option value="Marketing Team">Marketing Team</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Status</label>
+              <select [(ngModel)]="currentProject.status" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="planning">Planning</option>
+                <option value="in-progress">In Progress</option>
+                <option value="on-hold">On Hold</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Priority</label>
+              <select [(ngModel)]="currentProject.priority" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Progress (%)</label>
+              <input type="number" [(ngModel)]="currentProject.progress" min="0" max="100" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 required-field">Project Manager</label>
+            <select [(ngModel)]="currentProject.manager" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+              <option value="">Select Project Manager</option>
+              <option value="John Doe">John Doe</option>
+              <option value="Jane Smith">Jane Smith</option>
+              <option value="Mike Johnson">Mike Johnson</option>
+              <option value="Emily Davis">Emily Davis</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500">Budget ($)</label>
+            <input type="number" [(ngModel)]="currentProject.budget" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" min="0">
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button type="button" (click)="closeAllModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" (click)="saveProjectChanges()" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Sprint Details Modal -->
+<div *ngIf="showSprintDetailsModal && currentSprint" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">{{ currentSprint.name }}</h3>
+        <button (click)="closeAllModals()" class="text-gray-400 hover:text-gray-600 text-base">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="w-full md:w-2/3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Project</label>
+              <p class="text-sm mt-1 font-medium">{{ currentSprint.project }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Status</label>
+              <p class="text-sm mt-1" [ngClass]="{
+                'text-green-600': currentSprint.status === 'completed',
+                'text-blue-600': currentSprint.status === 'active',
+                'text-yellow-600': currentSprint.status === 'upcoming'
+              }">
+                {{ currentSprint.status.charAt(0).toUpperCase() + currentSprint.status.slice(1) }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">Start Date</label>
+              <p class="text-sm mt-1">{{ formatDate(currentSprint.startDate) }}</p>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500">End Date</label>
+              <p class="text-sm mt-1">{{ formatDate(currentSprint.endDate) }}</p>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500">Sprint Goal</label>
+            <p class="text-sm mt-1">{{ currentSprint.goal }}</p>
+          </div>
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500">Description</label>
+            <p class="text-sm mt-1">{{ currentSprint.description || 'No description provided' }}</p>
+          </div>
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="text-sm font-medium text-gray-800">Tasks</h4>
+              <button class="text-xs text-indigo-600 hover:text-indigo-800">Add Task</button>
+            </div>
+            <div class="space-y-2">
+              <div *ngFor="let task of currentSprint.tasks" class="bg-gray-50 p-3 rounded-lg">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="text-xs font-medium text-gray-900">{{ task.name }}</h4>
+                    <p class="text-xs text-gray-500 mt-1">Assigned to: {{ task.assignee }}</p>
+                  </div>
+                  <span class="text-xs px-2 py-1 rounded-full" 
+                        [ngClass]="{
+                          'bg-green-100 text-green-800': task.status === 'done',
+                          'bg-blue-100 text-blue-800': task.status === 'in-progress',
+                          'bg-gray-100 text-gray-800': task.status === 'todo'
+                        }">
+                    {{ task.status.replace('-', ' ') }}
+                  </span>
+                </div>
+                <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p class="text-gray-500">Due Date</p>
+                    <p class="text-gray-900">{{ formatDate(task.dueDate) }}</p>
+                  </div>
+                  <div>
+                    <p class="text-gray-500">Priority</p>
+                    <p class="text-gray-900 capitalize">{{ task.priority }}</p>
+                  </div>
+                </div>
+                <div class="mt-2 flex justify-between items-center">
+                  <div class="flex items-center">
+                    <div class="w-16 mr-2">
+                      <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="bg-indigo-600 h-1.5 rounded-full" 
+                             [style.width]="task.status === 'done' ? '100%' : task.status === 'in-progress' ? '50%' : '0%'"></div>
+                      </div>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ task.estimatedHours }}h</span>
+                  </div>
+                  <div class="flex space-x-2">
+                    <button class="text-xs text-indigo-600 hover:text-indigo-800">Edit</button>
+                    <button class="text-xs text-red-600 hover:text-red-800">Delete</button>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="currentSprint.tasks.length === 0" class="text-xs text-gray-500">
+                No tasks yet
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full md:w-1/3">
+          <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <h4 class="text-sm font-medium text-gray-800 mb-3">Sprint Statistics</h4>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Tasks Completed</span>
+                  <span>{{ currentSprint.stats.tasksCompleted }}/{{ currentSprint.stats.totalTasks }}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-green-500 h-1.5 rounded-full" 
+                       [style.width]="(currentSprint.stats.tasksCompleted / currentSprint.stats.totalTasks) * 100 + '%'"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Time Spent</span>
+                  <span>{{ currentSprint.stats.timeSpent }} / {{ currentSprint.stats.estimatedTime }} hours</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-blue-500 h-1.5 rounded-full" 
+                       [style.width]="(currentSprint.stats.timeSpent / currentSprint.stats.estimatedTime) * 100 + '%'"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span>Days Remaining</span>
+                  <span>{{ getDaysRemaining(currentSprint.endDate) }} days</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-purple-500 h-1.5 rounded-full" 
+                       [style.width]="getSprintCompletionPercentage(currentSprint) + '%'"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <h4 class="text-sm font-medium text-gray-800 mb-3">Team Members</h4>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  JD
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">John Doe</p>
+                  <p class="text-xs text-gray-500">Project Manager</p>
+                </div>
+              </div>
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  JS
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">Jane Smith</p>
+                  <p class="text-xs text-gray-500">UI/UX Designer</p>
+                </div>
+              </div>
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs">
+                  MJ
+                </div>
+                <div class="ml-2">
+                  <p class="text-xs font-medium text-gray-900">Mike Johnson</p>
+                  <p class="text-xs text-gray-500">Frontend Developer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button (click)="deleteSprint()" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700">
+          Delete Sprint
+        </button>
+        <button (click)="editSprint(currentSprint.id)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+          Edit Sprint
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

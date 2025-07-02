@@ -1,0 +1,34 @@
+import { Injectable } from '@angular/core';
+import { Project } from '../../model/user.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProjectService {
+  private projects: Project[] = [
+    {
+      id: '1',
+      name: 'Website Redesign',
+      team: 'Development',
+      status: 'in-progress',
+      progress: 65,
+      startDate: '2024-06-01',
+      deadline: '2024-07-01',
+      priority: 'High'
+    },
+    {
+      id: '2',
+      name: 'Mobile App',
+      team: 'Development',
+      status: 'in-progress',
+      progress: 30,
+      startDate: '2024-06-10',
+      deadline: '2024-08-15',
+      priority: 'Medium'
+    }
+  ];
+
+  getProjects(): Project[] {
+    return this.projects;
+  }
+}

@@ -1,0 +1,428 @@
+<!-- Tabs Navigation -->
+<div class="flex border-b border-gray-200 mb-6">
+    <button 
+        (click)="switchTab('users')" 
+        [class]="'tab-button px-4 py-2 text-md font-medium ' + (activeTab === 'users' ? 'active' : '')"
+    >
+        <fa-icon [icon]="faUsers" class="mr-2"></fa-icon> Users
+    </button>
+    <button 
+        (click)="switchTab('teams')" 
+        [class]="'tab-button px-4 py-2 text-md font-medium ' + (activeTab === 'teams' ? 'active' : '')"
+    >
+        <fa-icon [icon]="faProjectDiagram" class="mr-2"></fa-icon> Teams
+    </button>
+    <button 
+        (click)="switchTab('performance')" 
+        [class]="'tab-button px-4 py-2 text-md font-medium ' + (activeTab === 'performance' ? 'active' : '')"
+    >
+        <fa-icon [icon]="faChartLine" class="mr-2"></fa-icon> Performance
+    </button>
+</div>
+
+<!-- Users Tab Content -->
+<div *ngIf="activeTab === 'users'" class="tab-content active">
+    <!-- Search, Filter and Add User -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"> 
+        <div class="relative w-full md:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <fa-icon [icon]="faSearch" class="text-gray-400 text-sm"></fa-icon>
+            </div>
+            <input 
+                type="text" 
+                [(ngModel)]="searchTerm"
+                (input)="applyFilters()"
+                class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+                placeholder="Search users..."
+            > 
+        </div>
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="relative">
+                <button 
+                    (click)="showFilterDropdown = !showFilterDropdown"
+                    class="flex items-center gap-1 bg-white hover:bg-gray-50 text-gray-700 py-2 px-3 rounded-lg border border-gray-300 text-sm"
+                >
+                    <fa-icon [icon]="faFilter"></fa-icon>
+                    Filter
+                </button>
+                <div *ngIf="showFilterDropdown" class="filter-dropdown">
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Role</label>
+                            <select 
+                                [(ngModel)]="selectedRole"
+                                (change)="applyFilters()"
+                                class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                                <option value="">All Roles</option>
+                                <option value="admin">Admin</option>
+                                <option value="team-lead">Team Lead</option>
+                                <option value="user">User</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                            <select 
+                                [(ngModel)]="selectedStatus"
+                                (change)="applyFilters()"
+                                class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="on-leave">On Leave</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Team</label>
+                            <select 
+                                [(ngModel)]="selectedTeam"
+                                (change)="applyFilters()"
+                                class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            >
+                                <option value="">All Teams</option>
+                                <option *ngFor="let team of teams" [value]="team.id">{{team.name}}</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end gap-1">
+                            <button 
+                                (click)="resetFilters()"
+                                class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800"
+                            >
+                                Reset
+                            </button>
+                            <button 
+                                (click)="showFilterDropdown = false"
+                                class="px-2 py-1 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700"
+                            >
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                <fa-icon [icon]="faPlus" class="mr-2"></fa-icon> Add User
+            </button>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr *ngFor="let user of paginatedUsers" class="hover:bg-gray-50">
+                        <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{user.id}}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{user.name}}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{user.email}}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 capitalize">{{user.role.replace('-', ' ')}}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{user.team || 'None'}}</td>
+                        <td class="px-6 py-3 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded-full text-xs" [ngClass]="getStatusClass(user.status ?? '')">
+                                {{user.status}}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end space-x-1">
+                                <button 
+                                    (click)="viewUser(user)"
+                                    class="action-btn view-btn" 
+                                    title="View"
+                                >
+                                    <fa-icon [icon]="faEye"></fa-icon>
+                                </button>
+                                <button 
+                                    (click)="editUser(user)"
+                                    class="action-btn edit-btn" 
+                                    title="Edit"
+                                >
+                                    <fa-icon [icon]="faEdit"></fa-icon>
+                                </button>
+                                <button 
+                                    (click)="deleteUser(user)"
+                                    class="action-btn delete-btn" 
+                                    title="Delete"
+                                >
+                                    <fa-icon [icon]="faTrashAlt"></fa-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="filteredUsers.length === 0">
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No users found matching your criteria
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between px-2 py-3">
+        <div class="text-sm text-gray-500">
+            Showing {{(currentPage - 1) * itemsPerPage + 1}} to {{getToEntryNumber()}} of {{filteredUsers.length}} entries
+        </div>
+        <div class="flex space-x-1" *ngIf="totalPages > 1">
+            <button 
+                (click)="changePage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+                class="pagination-btn"
+                [class.disabled]="currentPage === 1"
+            >
+                Previous
+            </button>
+            <button 
+                *ngFor="let page of [].constructor(totalPages); let i = index"
+                (click)="changePage(i + 1)"
+                class="pagination-btn"
+                [class.active]="currentPage === i + 1"
+            >
+                {{i + 1}}
+            </button>
+            <button 
+                (click)="changePage(currentPage + 1)"
+                [disabled]="currentPage === totalPages"
+                class="pagination-btn"
+                [class.disabled]="currentPage === totalPages"
+            >
+                Next
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Teams Tab Content -->
+<div *ngIf="activeTab === 'teams'" class="tab-content">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div class="relative w-full md:w-64">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <fa-icon [icon]="faSearch" class="text-gray-400 text-sm"></fa-icon>
+            </div>
+            <input 
+                type="text" 
+                class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+                placeholder="Search teams..."
+            > 
+        </div>
+        <div class="flex gap-3">
+            <button class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                <fa-icon [icon]="faPlus" class="mr-2"></fa-icon> Add Sub-Team
+            </button>
+            <button class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+                <fa-icon [icon]="faPlus" class="mr-2"></fa-icon> Create Team
+            </button>
+        </div>
+    </div>
+
+    <!-- Teams Cards -->
+    <div class="space-y-4">
+        <div *ngFor="let team of teams" class="team-card bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-800">{{team.name}}</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{team.department}} Department</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            {{team.members}} members
+                        </span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {{team.projects}} projects
+                        </span>
+                    </div>
+                </div>
+                <div *ngIf="team.lead" class="mt-2 flex items-center">
+                    <span class="text-xs text-gray-500 mr-1">Team Lead:</span>
+                    <span class="text-xs font-medium">{{team.lead}}</span>
+                </div>
+                <div class="mt-2">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Projects Completion</span>
+                        <span>{{team.completionRate}}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="bg-indigo-600 h-1.5 rounded-full" [style.width.%]="team.completionRate"></div>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        <button 
+                            (click)="viewTeam(team)"
+                            class="text-indigo-600 hover:text-indigo-900 text-xs font-medium"
+                        >
+                            View Team
+                        </button>
+                        <button 
+                            *ngIf="getSubTeams(team.id).length > 0"
+                            (click)="toggleTeamExpansion(team.id)"
+                            class="text-gray-600 hover:text-gray-900 text-xs font-medium"
+                        >
+                            <fa-icon 
+                                [icon]="faChevronRight" 
+                                class="text-xs toggle-icon mr-1"
+                                [class.rotate-90]="isTeamExpanded(team.id)"
+                            ></fa-icon>
+                            <span>{{getSubTeams(team.id).length}} sub-teams</span>
+                        </button>
+                    </div>
+                    <button 
+                        (click)="addSubTeam(team)"
+                        class="text-indigo-600 hover:text-indigo-900 text-xs font-medium"
+                    >
+                        <fa-icon [icon]="faPlus" class="mr-1"></fa-icon> Add Sub-Team
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Sub-teams hierarchy -->
+            <div *ngIf="isTeamExpanded(team.id)" class="team-hierarchy">
+                <div *ngFor="let subTeam of getSubTeams(team.id)" class="sub-team">
+                    <div class="team-card bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden ml-6">
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-base font-semibold text-gray-800">{{subTeam.name}}</h3>
+                                    <p class="text-xs text-gray-500 mt-1">{{subTeam.department}} Department</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        {{subTeam.members}} members
+                                    </span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {{subTeam.projects}} projects
+                                    </span>
+                                </div>
+                            </div>
+                            <div *ngIf="subTeam.lead" class="mt-2 flex items-center">
+                                <span class="text-xs text-gray-500 mr-1">Sub-Team Lead:</span>
+                                <span class="text-xs font-medium">{{subTeam.lead}}</span>
+                            </div>
+                            <div class="mt-4 flex justify-end">
+                                <button 
+                                    (click)="viewTeam(subTeam)"
+                                    class="text-indigo-600 hover:text-indigo-900 text-xs font-medium"
+                                >
+                                    View Sub-Team
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Tab Content -->
+<div *ngIf="activeTab === 'performance'" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Team Leads Performance -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Team Leads Performance</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion Rate</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr *ngFor="let lead of teamLeads" class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <img class="h-8 w-8 rounded-full" [src]="lead.profileImg || 'assets/images/default-profile.png'" [alt]="lead.name">
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">{{lead.name}}</div>
+                                        <div class="text-xs text-gray-500">{{lead.email}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                                {{lead.team || 'No team'}}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                                {{lead.projects?.length || 0}}
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-20 mr-2">
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                            <div class="bg-green-500 h-1.5 rounded-full" [style.width.%]="lead.completionRate || 0"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">{{lead.completionRate || 0}}%</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span>★★★★☆</span>
+                                    <span class="ml-1 text-xs text-gray-500">4.2</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Performers -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Top Performers</h3>
+            <div class="space-y-3">
+                <div *ngFor="let user of users.slice(0, 5); let i = index" class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold">
+                        {{i + 1}}
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">{{user.name}}</div>
+                        <div class="text-xs text-gray-500">{{user.team || 'No team'}}</div>
+                    </div>
+                    <div class="ml-auto text-right">
+                        <div class="text-sm font-medium text-indigo-600">92%</div>
+                        <div class="text-xs text-gray-500">Performance</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance Charts -->
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Team Performance Metrics</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Project Completion Rate</h4>
+                <div class="h-64">
+                    <canvas id="teamCompletionChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Task Completion Timeline</h4>
+                <div class="h-64">
+                    <canvas id="taskTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

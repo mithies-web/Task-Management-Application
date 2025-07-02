@@ -1,0 +1,79 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-footer',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <footer class="bg-dark text-white py-16 w-full">
+      <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-4 gap-10">
+          <div class="md:col-span-2">
+            <div class="flex items-center mb-6">
+              <img src="https://via.placeholder.com/48x48/ffffff/6366f1?text=GF" alt="Logo" class="w-12 h-12 mr-2">
+              <span class="text-xl font-bold">GAI TaskFlow</span>
+            </div>
+            <p class="text-md text-gray-300 mb-8">
+              Effortless task management for teams of all sizes. Streamline your workflow and boost productivity.
+            </p>
+            <div class="flex space-x-6">
+              <a href="https://x.com" target="_blank" rel="noopener noreferrer" 
+                 class="text-gray-300 hover:text-white transition-colors duration-300">
+                <i class="fab fa-twitter text-2xl"></i>
+              </a>
+              <a href="https://in.linkedin.com" target="_blank" rel="noopener noreferrer"
+                 class="text-gray-300 hover:text-white transition-colors duration-300">
+                <i class="fab fa-linkedin text-2xl"></i>
+              </a>
+              <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer"
+                 class="text-gray-300 hover:text-white transition-colors duration-300">
+                <i class="fab fa-facebook text-2xl"></i>
+              </a>
+            </div>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-semibold mb-6">Overview</h3>
+            <ul class="space-y-3">
+              <li *ngFor="let link of overviewLinks">
+                <a [href]="link.href" 
+                   class="text-lg text-gray-300 hover:text-white transition-colors duration-300 nav-link">
+                  {{ link.text }}
+                </a>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-semibold mb-6">Contact Us</h3>
+            <ul class="space-y-3">
+              <li class="flex items-start" *ngFor="let contact of contactInfo">
+                <i [class]="'fas ' + contact.icon + ' text-lg mt-1 mr-3 text-gray-300'"></i>
+                <span class="text-lg text-gray-300">{{ contact.text }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="border-t border-gray-700 mt-16 pt-10 text-center lg:text-md text-gray-400">
+          <p>© 2024 TaskFlow. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  `
+})
+export class FooterComponent {
+  overviewLinks = [
+    { text: 'About Us', href: '#about' },
+    { text: 'Features', href: '#features' },
+    { text: 'Impacts', href: '#impacts' },
+    { text: 'Testimonials', href: '#testimonials' }
+  ];
+
+  contactInfo = [
+    { icon: 'fa-envelope', text: 'genworx-ai@gmail.com' },
+    { icon: 'fa-phone-alt', text: '+91 63833 50764' },
+    { icon: 'fa-map-marker-alt', text: '123, Chennai, TN 600017 India' }
+  ];
+}
