@@ -53,7 +53,7 @@ interface TestimonialItem {
   templateUrl: './content-management.html',
   styleUrls: ['./content-management.css']
 })
-export class ContentManagementComponent implements OnInit {
+export class ContentManagement implements OnInit {
   activeTab = 'home';
   previewMode = 'desktop';
 

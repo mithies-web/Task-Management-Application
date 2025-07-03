@@ -13,6 +13,7 @@ import { Router, RouterModule } from '@angular/router';
   styleUrls: ['./header.css'],
 })
 export class Header implements OnInit {
+  image: string = 'public/logo/logo-black.png';
   isMobileMenuOpen = false;
   private isBrowser: boolean;
 

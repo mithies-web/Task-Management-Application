@@ -49,7 +49,7 @@ interface ReportForm {
   templateUrl: './report-management.html',
   styleUrls: ['./report-management.css']
 })
-export class ReportManagementComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('reportPieChart') reportPieChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('reportBarChart') reportBarChartRef!: ElementRef<HTMLCanvasElement>;
 

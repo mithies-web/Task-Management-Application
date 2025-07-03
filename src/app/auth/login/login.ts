@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { catchError, finalize } from 'rxjs/operators';
-import { Auth } from '../../core/services/auth';
+import { Auth } from '../../core/services/auth/auth';
 import { throwError } from 'rxjs';
 import { UserRole } from '../../model/user.model';
 
@@ -19,6 +19,8 @@ import { UserRole } from '../../model/user.model';
   styleUrls: ['./login.css']
 })
 export class Login {
+  image: string = 'public/logo/logo-black.png';
+  illustration: string = 'public/logo/full-logo.png';
   loginForm: FormGroup;
   showPassword = false;
   loginError = false;
@@ -79,13 +81,7 @@ export class Login {
       )
       .subscribe({
         next: (response) => {
-          // Option 1: Use window.location.href for full reload
           window.location.href = this.getRedirectUrl(response.user.role);
-          
-          // OR Option 2: Use Angular router with navigation strategy
-          // this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-          //   this.router.navigate([this.getRedirectUrl(response.user.role)]);
-          // });
         },
         error: () => {
           this.loginError = true;

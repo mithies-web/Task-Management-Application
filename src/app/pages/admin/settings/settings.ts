@@ -45,7 +45,7 @@ interface ActiveSession {
   templateUrl: './settings.html',
   styleUrls: ['./settings.css'],
 })
-export class SettingsComponent implements OnInit {
+export class Settings implements OnInit {
   activeTab = 'profile';
   
   // Password visibility toggles
@@ -73,10 +73,11 @@ export class SettingsComponent implements OnInit {
   ];
 
   profileForm: ProfileForm = {
-    name: 'Admin Name',
+    name: 'Admin User',
     email: 'admin@genworx.ai',
-    phone: '+1 (555) 123-4567',
-    profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg'
+    phone: '+91 63383350764',
+    profilePicture: 'public/assets/profile1.JPG'
+
   };
 
   securityForm: SecurityForm = {
@@ -96,15 +97,15 @@ export class SettingsComponent implements OnInit {
   activeSessions: ActiveSession[] = [
     {
       id: '1',
-      device: 'Windows 10 - Chrome',
-      location: 'New York, US',
+      device: 'Windows 11 - Opera',
+      location: 'Erode, Tamil Nadu',
       lastActive: '2 hours ago',
       icon: 'fa-desktop'
     },
     {
       id: '2',
-      device: 'iPhone 13 - Safari',
-      location: 'San Francisco, US',
+      device: 'IQOO Z7 5G',
+      location: 'Coimbatore, Tamil Nadu',
       lastActive: '1 day ago',
       icon: 'fa-mobile-alt'
     }

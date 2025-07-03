@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { delay, tap } from 'rxjs/operators';
-import { AuthResponse, LoginCredentials, User, UserRole } from '../../model/user.model';
+import { AuthResponse, LoginCredentials, User, UserRole } from '../../../model/user.model';
 import { PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -20,7 +20,9 @@ export class Auth {
         id: '1',
         email: 'admin@genworx.ai',
         role: UserRole.ADMIN,
-        name: 'Admin User'
+        name: 'Admin User',
+        username: 'admin',
+        status: 'active',
       }
     },
     {
@@ -30,7 +32,9 @@ export class Auth {
         id: '2',
         email: 'mithiesoff@gmail.com',
         role: UserRole.LEAD,
-        name: 'Lead User'
+        name: 'Lead User',
+        username: 'leaduser',
+        status: 'active',
       }
     },
     {
@@ -40,7 +44,9 @@ export class Auth {
         id: '3',
         email: 'mithiesofficial@gmail.com',
         role: UserRole.USER,
-        name: 'Teammate User'
+        name: 'Teammate User',
+        username: 'teammateuser',
+        status: 'active'
       }
     }
   ];

@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Inject,
+  PLATFORM_ID,
+  ChangeDetectorRef
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -12,7 +19,7 @@ interface ForgotPasswordForm {
   selector: 'app-forgot-password',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     FormsModule,
     RouterModule
   ],
@@ -20,6 +27,9 @@ interface ForgotPasswordForm {
   styleUrls: ['./forgot-password.css'],
 })
 export class ForgotPassword implements OnInit, OnDestroy {
+  image: string = 'public/logo/logo-black.png';
+  illustration: string = 'public/logo/full-logo.png';
+
   private isBrowser: boolean;
   private countdownInterval: any;
 
@@ -44,14 +54,13 @@ export class ForgotPassword implements OnInit, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
-  ngOnInit() {
-    // Component initialization
-  }
+  ngOnInit() {}
 
   ngOnDestroy() {
     if (this.countdownInterval) {
@@ -83,93 +92,88 @@ export class ForgotPassword implements OnInit, OnDestroy {
   }
 
   onOtpInput() {
-    // Auto-submit when 6 digits are entered
     if (this.formData.otp.length === 6 && /^\d+$/.test(this.formData.otp)) {
-      // Optional: Auto-submit or just validate
+      this.onSubmit();
     }
   }
 
   onSubmit() {
-    if (!this.canSubmit()) {
-      return;
-    }
+    if (!this.canSubmit() || this.isLoading) return;
+
+    this.isLoading = true;
+    this.loadingText = this.isOtpSent ? 'Verifying OTP...' : 'Sending OTP...';
 
     if (!this.isOtpSent) {
-      // First submission - send OTP
       this.sendOtp();
     } else {
-      // Second submission - verify OTP
       this.verifyOtp();
     }
   }
 
   sendOtp() {
-    this.isLoading = true;
-    this.loadingText = 'Sending OTP...';
-
-    // Simulate API call
     setTimeout(() => {
       if (this.isBrowser) {
         console.log('OTP sent to:', this.formData.email);
-        // Store email for password reset flow
         sessionStorage.setItem('resetEmail', this.formData.email);
-      }
-      
-      this.isOtpSent = true;
-      this.isLoading = false;
-      this.startCountdown();
-      
-      // Show success feedback
-      if (this.isBrowser) {
-        alert('OTP sent successfully! Please check your email.');
+
+        this.isOtpSent = true;
+        this.isLoading = false;
+        this.loadingText = '';
+        this.cdr.detectChanges(); // ✅ Ensure UI updates before alert
+
+        setTimeout(() => {
+          alert('OTP sent successfully! Please check your email.');
+          this.startCountdown();
+        }, 100); // Short delay before alert
       }
     }, 1500);
   }
 
   verifyOtp() {
-    this.isLoading = true;
-    this.loadingText = 'Verifying...';
-
-    // Simulate API verification
     setTimeout(() => {
       if (this.isBrowser) {
         console.log('OTP verified:', this.formData.otp);
-        
-        // Navigate to set new password page
-        this.router.navigate(['/set-new-password']);
+
+        this.router.navigate(['/set-new-password'], {
+          state: { email: this.formData.email }
+        });
       }
-      
+
       this.isLoading = false;
+      this.loadingText = '';
     }, 1500);
   }
 
   resendOtp() {
-    if (this.timeLeft > 0) {
-      return;
-    }
+    if (this.timeLeft > 0 || this.isLoading) return;
 
-    if (this.isBrowser) {
-      console.log('Resending OTP to:', this.formData.email);
-    }
-    
-    this.startCountdown();
-    
-    // Show temporary feedback
-    if (this.isBrowser) {
-      alert('OTP sent again! Please check your email.');
-    }
+    this.isLoading = true;
+    this.loadingText = 'Resending OTP...';
+
+    setTimeout(() => {
+      if (this.isBrowser) {
+        console.log('Resending OTP to:', this.formData.email);
+      }
+
+      this.isLoading = false;
+      this.loadingText = '';
+      this.startCountdown();
+
+      if (this.isBrowser) {
+        alert('OTP sent again! Please check your email.');
+      }
+    }, 1500);
   }
 
   startCountdown() {
     this.timeLeft = 60;
-    
+
     if (this.countdownInterval) {
       clearInterval(this.countdownInterval);
     }
-    
+
     this.countdownInterval = setInterval(() => {
       this.timeLeft--;
-      
       if (this.timeLeft <= 0) {
         clearInterval(this.countdownInterval);
       }
@@ -177,16 +181,18 @@ export class ForgotPassword implements OnInit, OnDestroy {
   }
 
   goBack() {
-    console.log('Going back...');
-    if (this.isBrowser && window.history.length > 1) {
-      window.history.back();
+    if (this.isOtpSent) {
+      this.isOtpSent = false;
+      this.timeLeft = 0;
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+      }
     } else {
-      this.router.navigate(['/login']);
+      if (this.isBrowser && window.history.length > 1) {
+        window.history.back();
+      } else {
+        this.router.navigate(['/login']);
+      }
     }
-  }
-
-  navigateToLogin() {
-    console.log('Navigating to login...');
-    this.router.navigate(['/login']);
   }
 }

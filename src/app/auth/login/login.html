@@ -1,16 +1,16 @@
 <div class="min-h-screen">
   <!-- Back Button -->
-  <a [routerLink]="['/']" class="back-btn bg-white text-primary-600 hover:bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
+  <a [routerLink]="['/']" class="back-btn bg-white text-primary hover:bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center shadow-lg cursor-pointer">
     <i class="fas fa-arrow-left"></i>
   </a>
 
   <div class="flex flex-col md:flex-row h-screen">
     <!-- Illustration Section -->
     <div class="illustration hidden md:flex flex-col items-center justify-center p-12 w-full md:w-1/2 text-white relative bg-primary">
-      <div class="max-w-md flex-wrap">
-        <img src="assets/logo/logo.png" alt="Task Management Logo" class="w-82 h-48 ml-10">
-        <h2 class="text-3xl font-bold mt-2 mb-4 ml-20">Streamline Your Workflow</h2>
-        <p class="text-xl opacity-90">GAI TaskFlow helps you organize, prioritize, and complete your tasks efficiently with AI-powered suggestions.</p>
+      <div class="max-w-md">
+        <img [src]="illustration" alt="Task Management Logo" class="w-80 h-44 ml-10 mb-10">
+        <h2 class="text-3xl font-bold mt-2 mb-4 text-center">Streamline Your Workflow</h2>
+        <p class="text-xl opacity-90 text-center">GAI TaskFlow helps you organize, prioritize, and complete your tasks efficiently with AI-powered suggestions.</p>
         <div class="mt-8 flex flex-wrap gap-4">
           <div class="flex items-center" *ngFor="let feature of features">
             <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-2">
@@ -22,13 +22,14 @@
       </div>
     </div>
 
-    <!-- Login Form -->
+    <!-- Login Form Section -->
     <div class="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
-      <div class="auth-container rounded-xl p-8 sm:p-10 w-full max-w-xl">
+      <div class="auth-container rounded-xl p-10 sm:p-12 w-full max-w-xl">
+        <!-- Header -->
         <div class="text-center mb-10">
           <div class="flex items-center justify-center mb-4">
-            <div class="w-14 h-14 rounded-lg flex items-center justify-center mr-3">
-              <img src="assets/logo/favlogo.png" alt="GenFlow Logo">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+              <img [src]="image" alt="GenFlow Logo">
             </div>
             <span class="text-3xl font-bold text-gray-800">GenFlow</span>
           </div>
@@ -36,6 +37,7 @@
           <p class="text-gray-600">Sign in to continue to your workspace</p>
         </div>
 
+        <!-- Login Form -->
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <!-- Email -->
           <div>
@@ -49,7 +51,7 @@
                        'input-success': email?.valid && email?.touched,
                        'input-error': email?.invalid && email?.touched
                      }"
-                     class="input-field block w-full pl-8 pr-3 py-2 text-md border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                     class="input-field block w-full pl-8 pr-3 py-2 text-md border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                      placeholder="you@example.com"
                      autocomplete="email">
               <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none" *ngIf="email?.valid && email?.touched">
@@ -70,7 +72,7 @@
                 [type]="showPassword ? 'text' : 'password'"
                 id="password"
                 formControlName="password"
-                class="input-field block w-full pl-8 pr-10 py-2 text-md border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="input-field block w-full pl-8 pr-10 py-2 text-md border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="••••••••"
                 autocomplete="current-password"
               />
@@ -81,16 +83,16 @@
             <p class="mt-1 text-sm text-red-500" *ngIf="password?.invalid && password?.touched">Password must be at least 8 characters</p>
           </div>
 
-          <!-- Remember + Forgot -->
+          <!-- Remember Me & Forgot -->
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input id="remember-me" type="checkbox" 
-                    formControlName="rememberMe"
-                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                     formControlName="rememberMe"
+                     class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
               <label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
             </div>
             <div class="text-sm">
-              <a [routerLink]="['/forgot-password']" class="font-medium text-primary-600 hover:text-primary-500">
+              <a [routerLink]="['/forgot-password']" class="font-medium text-primary hover:text-primary-500">
                 Forgot password?
               </a>
             </div>
@@ -105,10 +107,10 @@
           <div>
             <button type="submit"
                     [disabled]="isLoading"
-                    class="w-full flex justify-center py-2 px-3 border border-transparent rounded-xl shadow-sm text-md font-medium text-white bg-primary hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white transition-colors duration-200"
                     [ngClass]="{
-                      'bg-primary-600 hover:bg-primary-700': !isLoading,
-                      'bg-primary-400 cursor-not-allowed': isLoading
+                      'bg-primary hover:bg-primary/90': !isLoading,
+                      'bg-gray-400 cursor-not-allowed': isLoading
                     }">
               <span *ngIf="!isLoading">Login</span>
               <span *ngIf="isLoading">
@@ -117,8 +119,15 @@
             </button>
           </div>
         </form>
+
+        <!-- Signup Link -->
         <div class="mt-8 text-center text-base text-gray-600">
-          Don't have an account? <a [routerLink]="['/signup']" class="font-medium text-primary hover:text-primary-500">Sign up now</a>
+          Don't have an account? 
+          <a [routerLink]="['/signup']">
+            <button class="font-medium text-primary hover:text-primary/80 cursor-pointer bg-transparent border-none">
+              Sign up now
+            </button>
+          </a>
         </div>
       </div>
     </div>

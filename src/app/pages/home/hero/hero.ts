@@ -14,4 +14,7 @@ import { Router, RouterModule } from '@angular/router';
 })
 export class HeroComponent {
   constructor(private router: Router) {}
+
+  illustration: string = 'public/assets/homeimage.png';
+
 }

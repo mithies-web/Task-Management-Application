@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Project } from '../../model/user.model';
+import { Project } from '../../../model/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +14,7 @@ export class ProjectService {
       progress: 65,
       startDate: '2024-06-01',
       deadline: '2024-07-01',
-      priority: 'High'
+      priority: 'high'
     },
     {
       id: '2',
@@ -24,11 +24,15 @@ export class ProjectService {
       progress: 30,
       startDate: '2024-06-10',
       deadline: '2024-08-15',
-      priority: 'Medium'
+      priority: 'medium'
     }
   ];
 
   getProjects(): Project[] {
     return this.projects;
+  }
+
+  addProject(project: any) {
+    this.projects.push(project);
   }
 }

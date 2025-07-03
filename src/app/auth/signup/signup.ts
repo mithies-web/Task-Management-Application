@@ -22,6 +22,10 @@ interface SignupForm {
   styleUrls: ['./signup.css'],
 })
 export class Signup implements OnInit {
+
+  image: string = 'public/logo/logo-black.png';
+  illustration: string = 'public/logo/full-logo.png';
+
   private isBrowser: boolean;
   
   formData: SignupForm = {

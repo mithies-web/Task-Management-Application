@@ -9,9 +9,9 @@
     <!-- Illustration Section -->
     <div class="illustration hidden md:flex flex-col items-center justify-center p-12 w-full md:w-1/2 text-white relative">
     <div class="max-w-md">
-        <img src="public/logo/logo.png" alt="Task Management" class="w-82 h-48 ml-10">
-        <h2 class="text-3xl font-bold mt-8 mb-4 ml-20">Join Thousands of Productive Teams</h2>
-        <p class="text-xl opacity-90">GAI TaskFlow helps teams organize, prioritize, and complete work efficiently with AI-powered task management.</p>
+        <img [src]="illustration" alt="Task Management" class="w-80 h-44 ml-10 mb-10">
+        <h2 class="text-3xl font-bold mt-8 mb-4 text-center">Join Thousands of Productive Teams</h2>
+        <p class="text-xl opacity-90 text-center">GAI TaskFlow helps teams organize, prioritize, and complete work efficiently with AI-powered task management.</p>
         <div class="mt-8 flex flex-wrap gap-4">
         <div class="flex items-center" *ngFor="let feature of features">
             <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-2">
@@ -30,7 +30,7 @@
         <div class="text-center">
         <div class="flex items-center justify-center mb-4">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-3">
-            <img src="https://via.placeholder.com/40x40/6366f1/white?text=GF" alt="GenFlow">
+            <img [src]="image" alt="GenFlow">
             </div>
             <span class="text-3xl font-bold text-gray-800">GenFlow</span>
         </div>

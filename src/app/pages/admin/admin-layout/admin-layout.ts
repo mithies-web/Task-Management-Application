@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { Auth } from '../../../core/services/auth';
+import { Auth } from '../../../core/services/auth/auth';
 import { Sidebar } from '../sidebar/sidebar';
 import { CommonModule } from '@angular/common';
 

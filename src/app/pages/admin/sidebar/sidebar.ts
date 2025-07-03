@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { Auth } from '../../../core/services/auth';
+import { Auth } from '../../../core/services/auth/auth';
 import { UserRole } from '../../../model/user.model';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -18,9 +18,10 @@ import { faUsers, faTachometerAlt, faProjectDiagram, faFileAlt, faChartBar, faCh
   styleUrls: ['./sidebar.css']
 })
 export class Sidebar {
-  adminName: string = '';
-  adminEmail: string = '';
-  profileImage: string = 'assets/assets/profile.JPG';
+  adminName: string = 'Admin';
+  adminEmail: string = 'admin@genworx.ai';
+  profileImage: string = 'public/assets/profile1.JPG';
+  logo: string = 'public/logo/logo-black.png';
 
   // Font Awesome icons
   faUsers = faUsers;
@@ -38,6 +39,14 @@ export class Sidebar {
       this.adminEmail = currentUser.email;
     }
   }
+
+  confirmNavigation(): void {
+      const confirmed = window.confirm('Are you sure you want to go to the home page?');
+
+      if (confirmed) {
+        this.router.navigate(['/home']); // or [''] if your home route is root
+      }
+    }
 
   logout() {
     this.authService.logout();

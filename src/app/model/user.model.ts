@@ -1,15 +1,16 @@
+// user.model.ts
 export interface User {
   id: string;
   email: string;
   role: UserRole;
-  name?: string;
+  name: string;
   username?: string;
   phone?: string;
   gender?: string;
   dob?: string;
   department?: string;
   team?: string | null;
-  status?: string;
+  status: string;
   employeeType?: string;
   location?: string;
   joinDate?: string;
@@ -17,12 +18,18 @@ export interface User {
   address?: string;
   about?: string;
   profileImg?: string;
+  password?: string;
   performance?: {
     taskCompletion: number;
     onTimeDelivery: number;
     qualityRating: number;
     projects: string[];
   };
+  projects?: {
+    length: number;
+  };
+  completionRate?: number;
+  selected?: boolean;
 }
 
 export enum UserRole {
@@ -45,13 +52,37 @@ export interface Team {
   id: string;
   name: string;
   department: string;
-  lead: string;
+  lead?: string;
   members: number;
   projects: number;
   completionRate: number;
-  description: string;
-  parentTeam: string | null;
-  subTeams: Team[];
+  description?: string;
+  parentTeam?: string | null;
+  subTeams?: Team[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  membersList?: string[];
+  projectList?: string[];
+  performanceMetrics?: {
+    taskCompletion: number;
+    onTimeDelivery: number;
+    qualityRating: number;
+  };
+}
+
+export interface TeamDetails extends Team {
+  hierarchy?: TeamHierarchy[];
+  leadDetails?: User | null;
+  memberDetails?: User[];
+  projectDetails?: Project[];
+}
+
+export interface TeamHierarchy {
+  id: string;
+  name: string;
+  level: number;
+  members: number;
+  projects: number;
 }
 
 export interface Project {
@@ -60,7 +91,28 @@ export interface Project {
   team: string;
   startDate: string;
   deadline: string;
-  status: string;
+  status: 'not-started' | 'in-progress' | 'completed' | 'on-hold';
   progress: number;
-  priority: string;
+  priority: 'low' | 'medium' | 'high';
+  description?: string;
+  teamMembers?: string[];
+  tasks?: Task[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Task {
+  id: string;
+  name: string;
+  description?: string;
+  assignee: string;
+  status: 'todo' | 'in-progress' | 'review' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  dueDate: string;
+  completionDate?: string;
+  estimatedHours?: number;
+  actualHours?: number;
+  projectId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

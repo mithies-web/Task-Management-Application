@@ -24,7 +24,7 @@ export class TestimonialsComponent {
       quote: 'A game changer for our team! The role-based dashboards and deadline notifications keep everyone on track - no more missed deadlines or communication gaps.',
       author: 'Thirunavukarasu K M ',
       position: 'Project Manager',
-      avatar: 'public/assets/profile2.jpg',
+      avatar: 'public/assets/emp1.jpg',
       borderColor: 'bg-primary'
     },
     {
@@ -32,7 +32,7 @@ export class TestimonialsComponent {
       quote: 'We\'ve tried many task management tools, but TaskFlow\'s intuitive interface and powerful features made it an instant favorite across our organization.',
       author: 'Sandeep S ',
       position: 'CTO, Tech Startup',
-      avatar: 'public/assets/profile1.JPG',
+      avatar: 'public/assets/emp2.jpg',
       borderColor: 'bg-secondary'
     }
   ];

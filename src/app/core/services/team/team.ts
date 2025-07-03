@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Team } from '../../model/user.model';
+import { Team } from '../../../model/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +10,7 @@ export class TeamService {
       id: '1',
       name: 'Development',
       department: 'Engineering',
-      lead: 'Team Lead',
+      lead: 'Gokul',
       members: 8,
       projects: 5,
       completionRate: 75,
@@ -22,7 +22,7 @@ export class TeamService {
       id: '2',
       name: 'Design',
       department: 'Creative',
-      lead: 'Design Lead',
+      lead: 'Abishek',
       members: 4,
       projects: 3,
       completionRate: 85,
@@ -34,5 +34,20 @@ export class TeamService {
 
   getTeams(): Team[] {
     return this.teams;
+  }
+
+  addTeam(team: Team): void {
+    this.teams.push(team);
+  }
+
+  updateTeam(team: Team): void {
+    const index = this.teams.findIndex(t => t.id === team.id);
+    if (index !== -1) {
+      this.teams[index] = { ...team };
+    }
+  }
+
+  deleteTeam(teamId: string): void {
+    this.teams = this.teams.filter(team => team.id !== teamId);
   }
 }

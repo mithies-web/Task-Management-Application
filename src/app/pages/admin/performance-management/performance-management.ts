@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './performance-management.html',
   styleUrls: ['./performance-management.css']
 })
-export class PerformanceManagementComponent implements OnInit, OnDestroy, AfterViewInit {
+export class PerformanceManagement implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('performanceChart') performanceChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('teamChart') teamChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('performanceDistributionChart') performanceDistributionChartRef!: ElementRef<HTMLCanvasElement>;
@@ -71,8 +71,8 @@ export class PerformanceManagementComponent implements OnInit, OnDestroy, AfterV
 
   topPerformers = [
     {
-      initials: 'JS',
-      name: 'John Smith',
+      initials: 'KM',
+      name: 'Thirunavukarasu',
       team: 'Development Team',
       performance: '94%',
       rank: '1st',
@@ -81,8 +81,8 @@ export class PerformanceManagementComponent implements OnInit, OnDestroy, AfterV
       avatarText: 'text-indigo-800'
     },
     {
-      initials: 'AJ',
-      name: 'Alice Johnson',
+      initials: 'S',
+      name: 'Sandeep',
       team: 'Design Team',
       performance: '91%',
       rank: '2nd',
@@ -91,8 +91,8 @@ export class PerformanceManagementComponent implements OnInit, OnDestroy, AfterV
       avatarText: 'text-green-800'
     },
     {
-      initials: 'MB',
-      name: 'Michael Brown',
+      initials: 'K',
+      name: 'Gokul',
       team: 'Marketing Team',
       performance: '89%',
       rank: '3rd',
@@ -101,8 +101,8 @@ export class PerformanceManagementComponent implements OnInit, OnDestroy, AfterV
       avatarText: 'text-blue-800'
     },
     {
-      initials: 'SD',
-      name: 'Sarah Davis',
+      initials: 'S',
+      name: 'Abishek',
       team: 'Development Team',
       performance: '87%',
       rank: '4th',
