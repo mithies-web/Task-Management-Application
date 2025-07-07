@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { 
   faSearch, 
@@ -11,7 +11,13 @@ import {
   faExclamationTriangle, 
   faInfoCircle,
   faFilePdf,
-  faFileWord
+  faFileWord,
+  faTrashAlt,
+  faEdit,
+  faEye,
+  faUsers,
+  faProjectDiagram,
+  faTasks
 } from '@fortawesome/free-solid-svg-icons';
 
 interface SprintTask {
@@ -46,6 +52,19 @@ export class ProjectManagement implements OnInit {
   faInfoCircle = faInfoCircle;
   faFilePdf = faFilePdf;
   faFileWord = faFileWord;
+  faTrashAlt = faTrashAlt;
+  faEye = faEye;
+  faEdit = faEdit;
+  faUsers = faUsers;
+  faProjectDiagram = faProjectDiagram;
+  faTasks = faTasks;
+
+  // Form Groups
+  projectForm: FormGroup;
+  sprintForm: FormGroup;
+  teamProjectForm: FormGroup;
+  editProjectForm: FormGroup;
+  editSprintForm: FormGroup;
 
   // Tabs
   activeTab: string = 'projects';
@@ -94,10 +113,50 @@ export class ProjectManagement implements OnInit {
             estimatedTime: 45
           }
         },
-        // More sprints...
+        {
+          id: 'S102',
+          name: 'Frontend Development',
+          project: 'Website Redesign',
+          startDate: '2023-05-15',
+          endDate: '2023-05-28',
+          status: 'active',
+          goal: 'Implement all frontend components',
+          description: 'This sprint focuses on developing the frontend based on the designs.',
+          tasks: [
+            { id: 'T201', name: 'Develop Homepage', assignee: 'Sandeep', dueDate: '2023-05-20', status: 'in-progress', priority: 'high', estimatedHours: 30 },
+            { id: 'T202', name: 'Develop Product Pages', assignee: 'Gokul', dueDate: '2023-05-25', status: 'todo', priority: 'medium', estimatedHours: 25 }
+          ],
+          stats: {
+            tasksCompleted: 0,
+            totalTasks: 2,
+            timeSpent: 15,
+            estimatedTime: 55
+          }
+        }
       ]
     },
-    // More projects...
+    {
+      id: 'P1002',
+      name: 'Mobile App Development',
+      description: 'Development of a cross-platform mobile application for iOS and Android',
+      startDate: '2023-06-01',
+      deadline: '2023-09-30',
+      team: 'Development Team',
+      manager: 'John Doe',
+      status: 'planning',
+      priority: 'medium',
+      progress: 10,
+      budget: 15000,
+      stats: {
+        tasksCompleted: 2,
+        totalTasks: 15,
+        timeSpent: 40,
+        estimatedTime: 400,
+        budgetUsed: 2000,
+        totalBudget: 15000
+      },
+      sprints: []
+    }
   ];
   
   // Sprints
@@ -122,26 +181,45 @@ export class ProjectManagement implements OnInit {
         timeSpent: 45,
         estimatedTime: 45
       }
+    },
+    {
+      id: 'S102',
+      name: 'Frontend Development',
+      project: 'Website Redesign',
+      startDate: '2023-05-15',
+      endDate: '2023-05-28',
+      status: 'active',
+      goal: 'Implement all frontend components',
+      description: 'This sprint focuses on developing the frontend based on the designs.',
+      tasks: [
+        { id: 'T201', name: 'Develop Homepage', assignee: 'Sandeep', dueDate: '2023-05-20', status: 'in-progress', priority: 'high', estimatedHours: 30 },
+        { id: 'T202', name: 'Develop Product Pages', assignee: 'Gokul', dueDate: '2023-05-25', status: 'todo', priority: 'medium', estimatedHours: 25 }
+      ],
+      stats: {
+        tasksCompleted: 0,
+        totalTasks: 2,
+        timeSpent: 15,
+        estimatedTime: 55
+      }
     }
-    // Add more sprints here if needed
   ];
 
   // Team Leads
   teamLeads: any[] = [
     {
-      name: 'Mithies',
+      name: 'John Doe',
       team: 'Development Team',
       projects: ['Website Redesign', 'Mobile App Development', 'Customer Portal Development'],
       status: 'busy'
     },
     {
-      name: 'Thirunavukkarasu',
+      name: 'Jane Smith',
       team: 'Design Team',
       projects: ['Brand Identity Update'],
       status: 'available'
     },
     {
-      name: 'Sandeep',
+      name: 'Mike Johnson',
       team: 'Marketing Team',
       projects: ['Marketing Campaign', 'Q2 Promotions'],
       status: 'busy'
@@ -191,39 +269,7 @@ export class ProjectManagement implements OnInit {
   showProjectDetailsModal: boolean = false;
   showEditProjectModal: boolean = false;
   showSprintDetailsModal: boolean = false;
-
-  // New Project/Sprint Forms
-  newProject: any = {
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    team: '',
-    manager: '',
-    priority: 'medium',
-    budget: 10000
-  };
-
-  newSprint: any = {
-    name: '',
-    description: '',
-    project: '',
-    status: 'upcoming',
-    startDate: '',
-    endDate: '',
-    goal: '',
-    selectedTasks: []
-  };
-
-  newTeamProject: any = {
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    team: '',
-    manager: '',
-    priority: 'medium'
-  };
+  showEditSprintModal: boolean = false;
 
   // Selected Project/Sprint
   selectedProject: any = null;
@@ -233,7 +279,64 @@ export class ProjectManagement implements OnInit {
   teamLeadAvailability: string = '';
   currentTeamLeadProjects: number = 0;
 
-  constructor() { }
+  constructor() {
+    // Initialize form groups
+    this.projectForm = new FormGroup({
+      name: new FormControl('', [Validators.required, Validators.minLength(3)]),
+      description: new FormControl('', [Validators.required, Validators.minLength(10)]),
+      startDate: new FormControl('', Validators.required),
+      endDate: new FormControl('', Validators.required),
+      team: new FormControl('', Validators.required),
+      manager: new FormControl('', Validators.required),
+      priority: new FormControl('medium'),
+      budget: new FormControl(10000, [Validators.required, Validators.min(0)])
+    });
+
+    this.sprintForm = new FormGroup({
+      name: new FormControl('', [Validators.required, Validators.minLength(3)]),
+      description: new FormControl(''),
+      project: new FormControl('', Validators.required),
+      status: new FormControl('upcoming'),
+      startDate: new FormControl('', Validators.required),
+      endDate: new FormControl('', Validators.required),
+      goal: new FormControl(''),
+      selectedTasks: new FormControl([])
+    });
+
+    this.teamProjectForm = new FormGroup({
+      name: new FormControl('', [Validators.required, Validators.minLength(3)]),
+      description: new FormControl('', [Validators.required, Validators.minLength(10)]),
+      startDate: new FormControl('', Validators.required),
+      endDate: new FormControl('', Validators.required),
+      team: new FormControl('', Validators.required),
+      manager: new FormControl('', Validators.required),
+      priority: new FormControl('medium')
+    });
+
+    this.editProjectForm = new FormGroup({
+      name: new FormControl('', [Validators.required, Validators.minLength(3)]),
+      description: new FormControl('', [Validators.required, Validators.minLength(10)]),
+      startDate: new FormControl('', Validators.required),
+      deadline: new FormControl('', Validators.required),
+      team: new FormControl('', Validators.required),
+      manager: new FormControl('', Validators.required),
+      status: new FormControl('planning'),
+      priority: new FormControl('medium'),
+      progress: new FormControl(0, [Validators.min(0), Validators.max(100)]),
+      budget: new FormControl(0, [Validators.required, Validators.min(0)])
+    });
+
+    this.editSprintForm = new FormGroup({
+      name: new FormControl('', [Validators.required, Validators.minLength(3)]),
+      description: new FormControl(''),
+      project: new FormControl('', Validators.required),
+      status: new FormControl('upcoming'),
+      startDate: new FormControl('', Validators.required),
+      endDate: new FormControl('', Validators.required),
+      goal: new FormControl(''),
+      selectedTasks: new FormControl([])
+    });
+  }
 
   ngOnInit(): void {
     this.filteredProjects = [...this.projects];
@@ -274,8 +377,8 @@ export class ProjectManagement implements OnInit {
     this.applyProjectsFilters();
   }
 
-  createNewSprint() {
-    console.log('createNewSprint called');
+  toggleProjectsFilter(): void {
+    this.filterProjectsDropdown = !this.filterProjectsDropdown;
   }
 
   // Sprint Filtering
@@ -387,7 +490,7 @@ export class ProjectManagement implements OnInit {
 
   // Project Management
   openAddProjectModal(): void {
-    this.newProject = {
+    this.projectForm.reset({
       name: '',
       description: '',
       startDate: new Date().toISOString().split('T')[0],
@@ -396,29 +499,28 @@ export class ProjectManagement implements OnInit {
       manager: '',
       priority: 'medium',
       budget: 10000
-    };
+    });
     this.showAddProjectModal = true;
   }
 
   createNewProject(): void {
-    if (!this.newProject.name || !this.newProject.description || !this.newProject.startDate || 
-        !this.newProject.endDate || !this.newProject.team || !this.newProject.manager) {
-      alert('Please fill in all required fields');
+    if (this.projectForm.invalid) {
+      this.markFormGroupTouched(this.projectForm);
       return;
     }
     
     const newProject = {
       id: 'P' + Math.floor(1000 + Math.random() * 9000),
-      name: this.newProject.name,
-      description: this.newProject.description,
-      startDate: this.newProject.startDate,
-      deadline: this.newProject.endDate,
-      team: this.newProject.team,
-      manager: this.newProject.manager,
+      name: this.projectForm.value.name,
+      description: this.projectForm.value.description,
+      startDate: this.projectForm.value.startDate,
+      deadline: this.projectForm.value.endDate,
+      team: this.projectForm.value.team,
+      manager: this.projectForm.value.manager,
       status: 'planning',
-      priority: this.newProject.priority,
+      priority: this.projectForm.value.priority,
       progress: 0,
-      budget: this.newProject.budget || 0,
+      budget: this.projectForm.value.budget || 0,
       sprints: [],
       stats: {
         tasksCompleted: 0,
@@ -426,7 +528,7 @@ export class ProjectManagement implements OnInit {
         timeSpent: 0,
         estimatedTime: 0,
         budgetUsed: 0,
-        totalBudget: this.newProject.budget || 0
+        totalBudget: this.projectForm.value.budget || 0
       }
     };
     
@@ -446,20 +548,44 @@ export class ProjectManagement implements OnInit {
   editProject(projectId: string): void {
     this.selectedProject = this.projects.find(p => p.id === projectId);
     if (this.selectedProject) {
+      this.editProjectForm.patchValue({
+        name: this.selectedProject.name,
+        description: this.selectedProject.description,
+        startDate: this.selectedProject.startDate,
+        deadline: this.selectedProject.deadline,
+        team: this.selectedProject.team,
+        manager: this.selectedProject.manager,
+        status: this.selectedProject.status,
+        priority: this.selectedProject.priority,
+        progress: this.selectedProject.progress,
+        budget: this.selectedProject.budget
+      });
       this.showEditProjectModal = true;
     }
   }
 
   updateProject(): void {
-    if (!this.selectedProject.name || !this.selectedProject.description || !this.selectedProject.startDate || 
-        !this.selectedProject.deadline || !this.selectedProject.team || !this.selectedProject.manager) {
-      alert('Please fill in all required fields');
+    if (this.editProjectForm.invalid) {
+      this.markFormGroupTouched(this.editProjectForm);
       return;
     }
     
     const index = this.projects.findIndex(p => p.id === this.selectedProject.id);
     if (index !== -1) {
-      this.projects[index] = {...this.selectedProject};
+      this.projects[index] = {
+        ...this.projects[index],
+        name: this.editProjectForm.value.name,
+        description: this.editProjectForm.value.description,
+        startDate: this.editProjectForm.value.startDate,
+        deadline: this.editProjectForm.value.deadline,
+        team: this.editProjectForm.value.team,
+        manager: this.editProjectForm.value.manager,
+        status: this.editProjectForm.value.status,
+        priority: this.editProjectForm.value.priority,
+        progress: this.editProjectForm.value.progress,
+        budget: this.editProjectForm.value.budget
+      };
+      
       this.filteredProjects = [...this.projects];
       this.applyProjectsFilters();
       this.showEditProjectModal = false;
@@ -490,8 +616,52 @@ export class ProjectManagement implements OnInit {
   editSprint(sprintId: string): void {
     this.selectedSprint = this.sprints.find(s => s.id === sprintId);
     if (this.selectedSprint) {
-      // In a real app, you would open an edit modal here
-      alert(`Edit sprint functionality would open here for sprint ${sprintId}`);
+      this.editSprintForm.patchValue({
+        name: this.selectedSprint.name,
+        description: this.selectedSprint.description,
+        project: this.selectedSprint.project,
+        status: this.selectedSprint.status,
+        startDate: this.selectedSprint.startDate,
+        endDate: this.selectedSprint.endDate,
+        goal: this.selectedSprint.goal,
+        selectedTasks: this.selectedSprint.tasks.map((t: any) => t.name)
+      });
+      this.showEditSprintModal = true;
+    }
+  }
+
+  updateSprint(): void {
+    if (this.editSprintForm.invalid) {
+      this.markFormGroupTouched(this.editSprintForm);
+      return;
+    }
+    
+    const index = this.sprints.findIndex(s => s.id === this.selectedSprint.id);
+    if (index !== -1) {
+      this.sprints[index] = {
+        ...this.sprints[index],
+        name: this.editSprintForm.value.name,
+        description: this.editSprintForm.value.description,
+        project: this.editSprintForm.value.project,
+        status: this.editSprintForm.value.status,
+        startDate: this.editSprintForm.value.startDate,
+        endDate: this.editSprintForm.value.endDate,
+        goal: this.editSprintForm.value.goal,
+        tasks: this.editSprintForm.value.selectedTasks.map((taskName: string) => ({
+          id: 'T' + Math.floor(100 + Math.random() * 900),
+          name: taskName,
+          assignee: 'Unassigned',
+          dueDate: this.editSprintForm.value.endDate,
+          status: 'todo',
+          priority: 'medium',
+          estimatedHours: 0
+        }))
+      };
+      
+      this.filteredSprints = [...this.sprints];
+      this.applySprintsFilters();
+      this.showEditSprintModal = false;
+      this.showSprintDetailsModal = false;
     }
   }
 
@@ -507,9 +677,47 @@ export class ProjectManagement implements OnInit {
     }
   }
 
+  createNewSprint(): void {
+    if (this.sprintForm.invalid) {
+      this.markFormGroupTouched(this.sprintForm);
+      return;
+    }
+    
+    const newSprint = {
+      id: 'S' + Math.floor(100 + Math.random() * 900),
+      name: this.sprintForm.value.name,
+      description: this.sprintForm.value.description,
+      project: this.sprintForm.value.project,
+      status: this.sprintForm.value.status,
+      startDate: this.sprintForm.value.startDate,
+      endDate: this.sprintForm.value.endDate,
+      goal: this.sprintForm.value.goal,
+      tasks: this.sprintForm.value.selectedTasks.map((taskName: string) => ({
+        id: 'T' + Math.floor(100 + Math.random() * 900),
+        name: taskName,
+        assignee: 'Unassigned',
+        dueDate: this.sprintForm.value.endDate,
+        status: 'todo',
+        priority: 'medium',
+        estimatedHours: 0
+      })),
+      stats: {
+        tasksCompleted: 0,
+        totalTasks: this.sprintForm.value.selectedTasks.length,
+        timeSpent: 0,
+        estimatedTime: 0
+      }
+    };
+    
+    this.sprints.push(newSprint);
+    this.filteredSprints = [...this.sprints];
+    this.applySprintsFilters();
+    this.showAddSprintModal = false;
+  }
+
   // Team Project Management
   openCreateTeamProjectModal(): void {
-    this.newTeamProject = {
+    this.teamProjectForm.reset({
       name: '',
       description: '',
       startDate: new Date().toISOString().split('T')[0],
@@ -517,16 +725,16 @@ export class ProjectManagement implements OnInit {
       team: '',
       manager: '',
       priority: 'medium'
-    };
+    });
     this.teamLeadAvailability = '';
     this.showCreateTeamProjectModal = true;
   }
 
   checkTeamLeadAvailability(): void {
-    if (this.newTeamProject.manager && this.newTeamProject.team) {
+    if (this.teamProjectForm.value.manager && this.teamProjectForm.value.team) {
       const teamLead = this.teamLeads.find(lead => 
-        lead.name === (this.newTeamProject.manager === 'john' ? 'John Doe' : 
-                      this.newTeamProject.manager === 'jane' ? 'Jane Smith' : 'Mike Johnson')
+        lead.name === (this.teamProjectForm.value.manager === 'john' ? 'John Doe' : 
+                      this.teamProjectForm.value.manager === 'jane' ? 'Jane Smith' : 'Mike Johnson')
       );
       
       if (teamLead) {
@@ -539,23 +747,22 @@ export class ProjectManagement implements OnInit {
   }
 
   createTeamProject(): void {
-    if (!this.newTeamProject.name || !this.newTeamProject.description || !this.newTeamProject.startDate || 
-        !this.newTeamProject.endDate || !this.newTeamProject.team || !this.newTeamProject.manager) {
-      alert('Please fill in all required fields');
+    if (this.teamProjectForm.invalid) {
+      this.markFormGroupTouched(this.teamProjectForm);
       return;
     }
     
     const newProject = {
       id: 'P' + Math.floor(1000 + Math.random() * 9000),
-      name: this.newTeamProject.name,
-      description: this.newTeamProject.description,
-      startDate: this.newTeamProject.startDate,
-      deadline: this.newTeamProject.endDate,
-      team: `${this.newTeamProject.team.charAt(0).toUpperCase() + this.newTeamProject.team.slice(1)} Team`,
-      manager: this.newTeamProject.manager === 'john' ? 'John Doe' : 
-              this.newTeamProject.manager === 'jane' ? 'Jane Smith' : 'Mike Johnson',
+      name: this.teamProjectForm.value.name,
+      description: this.teamProjectForm.value.description,
+      startDate: this.teamProjectForm.value.startDate,
+      deadline: this.teamProjectForm.value.endDate,
+      team: `${this.teamProjectForm.value.team.charAt(0).toUpperCase() + this.teamProjectForm.value.team.slice(1)} Team`,
+      manager: this.teamProjectForm.value.manager === 'john' ? 'John Doe' : 
+              this.teamProjectForm.value.manager === 'jane' ? 'Jane Smith' : 'Mike Johnson',
       status: 'planning',
-      priority: this.newTeamProject.priority,
+      priority: this.teamProjectForm.value.priority,
       progress: 0,
       stats: {
         tasksCompleted: 0,
@@ -587,6 +794,16 @@ export class ProjectManagement implements OnInit {
   }
 
   // Utility Functions
+  markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
+
   formatDate(dateString: string): string {
     if (!dateString) return '';
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -653,5 +870,6 @@ export class ProjectManagement implements OnInit {
     this.showProjectDetailsModal = false;
     this.showEditProjectModal = false;
     this.showSprintDetailsModal = false;
+    this.showEditSprintModal = false;
   }
 }

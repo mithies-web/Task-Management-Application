@@ -95,7 +95,7 @@ export class AdminDashboard implements OnInit, AfterViewInit {
       icon: 'fa-user-plus',
       iconBg: 'bg-blue-50 text-blue-600',
       title: 'New user registered',
-      description: 'John Doe',
+      description: 'Mithies P',
       time: '2 hours ago'
     },
     {

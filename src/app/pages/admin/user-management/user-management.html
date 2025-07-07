@@ -1,6 +1,7 @@
 <!-- user-management.html -->
 <!-- Tabs Navigation -->
-<div class="flex border-b border-gray-200 mb-6">
+<div class="flex justify-center border-b border-gray-200 mb-6">
+  <div class="flex">
     <button 
         (click)="switchTab('users')" 
         [class]="'tab-button px-4 py-2 text-md font-medium ' + (activeTab === 'users' ? 'active' : '')"
@@ -13,12 +14,7 @@
     >
         <fa-icon [icon]="faProjectDiagram" class="mr-2"></fa-icon> Teams
     </button>
-    <button 
-        (click)="switchTab('performance')" 
-        [class]="'tab-button px-4 py-2 text-md font-medium ' + (activeTab === 'performance' ? 'active' : '')"
-    >
-        <fa-icon [icon]="faChartLine" class="mr-2"></fa-icon> Performance
-    </button>
+  </div>
 </div>
 
 <!-- Users Tab Content -->
@@ -340,108 +336,9 @@
     </div>
 </div>
 
-<!-- Performance Tab Content -->
-<div *ngIf="activeTab === 'performance'" class="tab-content">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <!-- Team Leads Performance -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Team Leads Performance</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion Rate</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr *ngFor="let lead of teamLeads" class="hover:bg-gray-50">
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-8 w-8">
-                                        <img class="h-8 w-8 rounded-full" [src]="lead.profileImg || 'assets/images/default-profile.png'" [alt]="lead.name">
-                                    </div>
-                                    <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">{{lead.name}}</div>
-                                        <div class="text-xs text-gray-500">{{lead.email}}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
-                                {{lead.team || 'No team'}}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
-                                {{lead.projects?.length || 0}}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-20 mr-2">
-                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div class="bg-green-500 h-1.5 rounded-full" [style.width.%]="lead.completionRate || 0"></div>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-gray-500">{{lead.completionRate || 0}}%</span>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <span>★★★★☆</span>
-                                    <span class="ml-1 text-xs text-gray-500">4.2</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Top Performers -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Top Performers</h3>
-            <div class="space-y-3">
-                <div *ngFor="let user of topPerformers; let i = index" class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold">
-                        {{i + 1}}
-                    </div>
-                    <div class="ml-3">
-                        <div class="text-sm font-medium text-gray-900">{{user.name}}</div>
-                        <div class="text-xs text-gray-500">{{user.team || 'No team'}}</div>
-                    </div>
-                    <div class="ml-auto text-right">
-                        <div class="text-sm font-medium text-indigo-600">{{user.completionRate || 0}}%</div>
-                        <div class="text-xs text-gray-500">Performance</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Team Performance Charts -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Team Performance Metrics</h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Project Completion Rate</h4>
-                <div class="h-64">
-                    <canvas id="teamCompletionChart"></canvas>
-                </div>
-            </div>
-            <div>
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Task Completion Timeline</h4>
-                <div class="h-64">
-                    <canvas id="taskTimelineChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- User Details Modal -->
 <div *ngIf="showUserDetailsModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">User Details</h3>
@@ -565,7 +462,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 flex justify-end space-x-3">
+                    <div class="mt-6 flex justify-between items-center">
                         <button (click)="deleteUser(selectedUser)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700">
                             Delete User
                         </button>
@@ -581,7 +478,7 @@
 
 <!-- Edit User Modal -->
 <div *ngIf="showEditUserModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Edit User: {{selectedUser.name}}</h3>
@@ -600,27 +497,39 @@
                     <div class="grid lg:grid-cols-3 md:grid-cols-2 gap-3">
                         <div>
                             <label for="editId" class="block text-xs font-medium text-gray-500 required-field">User ID</label>
-                            <input type="text" id="editId" [(ngModel)]="selectedUser.id" name="id" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm locked-field" readonly>
+                            <input type="text" id="editId" [(ngModel)]="selectedUser.id" name="id" 
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm locked-field" readonly>
                         </div>
                         <div>
                             <label for="editName" class="block text-xs font-medium text-gray-500 required-field">Full Name</label>
-                            <input type="text" id="editName" [(ngModel)]="selectedUser.name" name="name" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="text" id="editName" [(ngModel)]="selectedUser.name" name="name" required 
+                                   [class.border-red-300]="userFormErrors.name"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.name" class="text-xs text-red-500">{{userFormErrors.name}}</span>
                         </div>
                         <div>
                             <label for="editUsername" class="block text-xs font-medium text-gray-500 required-field">Username</label>
-                            <input type="text" id="editUsername" [(ngModel)]="selectedUser.username" name="username" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="text" id="editUsername" [(ngModel)]="selectedUser.username" name="username" required 
+                                   [class.border-red-300]="userFormErrors.username"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.username" class="text-xs text-red-500">{{userFormErrors.username}}</span>
                         </div>
                         <div>
                             <label for="editEmail" class="block text-xs font-medium text-gray-500 required-field">Email</label>
-                            <input type="email" id="editEmail" [(ngModel)]="selectedUser.email" name="email" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="email" id="editEmail" [(ngModel)]="selectedUser.email" name="email" required 
+                                   [class.border-red-300]="userFormErrors.email"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.email" class="text-xs text-red-500">{{userFormErrors.email}}</span>
                         </div>
                         <div>
                             <label for="editPhone" class="block text-xs font-medium text-gray-500">Phone (Optional)</label>
-                            <input type="tel" id="editPhone" [(ngModel)]="selectedUser.phone" name="phone" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="tel" id="editPhone" [(ngModel)]="selectedUser.phone" name="phone" 
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                         </div>
                         <div>
                             <label for="editGender" class="block text-xs font-medium text-gray-500">Gender</label>
-                            <select id="editGender" [(ngModel)]="selectedUser.gender" name="gender" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editGender" [(ngModel)]="selectedUser.gender" name="gender" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
@@ -630,15 +539,18 @@
                         </div>
                         <div>
                             <label for="editDob" class="block text-xs font-medium text-gray-500">Date of Birth</label>
-                            <input type="date" id="editDob" [(ngModel)]="selectedUser.dob" name="dob" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="date" id="editDob" [(ngModel)]="selectedUser.dob" name="dob" 
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                         </div>
                         <div>
                             <label for="editDoj" class="block text-xs font-medium text-gray-500">Date of Joining</label>
-                            <input type="date" id="editDoj" [(ngModel)]="selectedUser.joinDate" name="joinDate" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="date" id="editDoj" [(ngModel)]="selectedUser.joinDate" name="joinDate" 
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                         </div>
                         <div>
                             <label for="editDepartment" class="block text-xs font-medium text-gray-500">Department</label>
-                            <select id="editDepartment" [(ngModel)]="selectedUser.department" name="department" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editDepartment" [(ngModel)]="selectedUser.department" name="department" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">Select Department</option>
                                 <option value="development">Development</option>
                                 <option value="design">Design</option>
@@ -651,31 +563,39 @@
                         </div>
                         <div>
                             <label for="editTeam" class="block text-xs font-medium text-gray-500">Team</label>
-                            <select id="editTeam" [(ngModel)]="selectedUser.team" name="team" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editTeam" [(ngModel)]="selectedUser.team" name="team" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">No Team</option>
                                 <option *ngFor="let team of teams" [value]="team.name">{{team.name}}</option>
                             </select>
                         </div>
                         <div>
                             <label for="editRole" class="block text-xs font-medium text-gray-500">Role</label>
-                            <select id="editRole" [(ngModel)]="selectedUser.role" name="role" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editRole" [(ngModel)]="selectedUser.role" name="role" 
+                                    [class.border-red-300]="userFormErrors.role"
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="user">User</option>
                                 <option value="team-lead">Team Lead</option>
                                 <option value="admin">Admin</option>
                             </select>
+                            <span *ngIf="userFormErrors.role" class="text-xs text-red-500">{{userFormErrors.role}}</span>
                         </div>
                         <div>
                             <label for="editStatus" class="block text-xs font-medium text-gray-500">Status</label>
-                            <select id="editStatus" [(ngModel)]="selectedUser.status" name="status" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editStatus" [(ngModel)]="selectedUser.status" name="status" 
+                                    [class.border-red-300]="userFormErrors.status"
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="suspended">Suspended</option>
                                 <option value="on-leave">On Leave</option>
                             </select>
+                            <span *ngIf="userFormErrors.status" class="text-xs text-red-500">{{userFormErrors.status}}</span>
                         </div>
                         <div>
                             <label for="editEmployeeType" class="block text-xs font-medium text-gray-500">Employee Type</label>
-                            <select id="editEmployeeType" [(ngModel)]="selectedUser.employeeType" name="employeeType" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editEmployeeType" [(ngModel)]="selectedUser.employeeType" name="employeeType" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="full-time">Full-time</option>
                                 <option value="part-time">Part-time</option>
                                 <option value="contract">Contract</option>
@@ -684,7 +604,8 @@
                         </div>
                         <div>
                             <label for="editLocation" class="block text-xs font-medium text-gray-500">Location</label>
-                            <select id="editLocation" [(ngModel)]="selectedUser.location" name="location" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="editLocation" [(ngModel)]="selectedUser.location" name="location" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="remote">Remote</option>
                                 <option value="office">Office</option>
                                 <option value="hybrid">Hybrid</option>
@@ -692,19 +613,24 @@
                         </div>
                         <div class="md:col-span-2">
                             <label for="editAddress" class="block text-xs font-medium text-gray-500">Address (Optional)</label>
-                            <textarea id="editAddress" [(ngModel)]="selectedUser.address" name="address" rows="2" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
+                            <textarea id="editAddress" [(ngModel)]="selectedUser.address" name="address" rows="2" 
+                                      class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
                         </div>
                         <div class="md:col-span-2">
                             <label for="editAbout" class="block text-xs font-medium text-gray-500">About (Optional)</label>
-                            <textarea id="editAbout" [(ngModel)]="selectedUser.about" name="about" rows="3" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
+                            <textarea id="editAbout" [(ngModel)]="selectedUser.about" name="about" rows="3" 
+                                      class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" (click)="closeModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        <button type="button" (click)="closeModals()" 
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
-                            Save Changes
+                        <button type="submit" [disabled]="isSubmitting"
+                                class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                            <span *ngIf="!isSubmitting">Save Changes</span>
+                            <span *ngIf="isSubmitting">Saving...</span>
                         </button>
                     </div>
                 </div>
@@ -715,7 +641,7 @@
 
 <!-- Add User Modal -->
 <div *ngIf="showAddUserModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Add New User</h3>
@@ -734,27 +660,41 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <label for="addName" class="block text-xs font-medium text-gray-500 required-field">Full Name</label>
-                            <input type="text" id="addName" [(ngModel)]="newUser.name" name="name" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="text" id="addName" [(ngModel)]="newUser.name" name="name" required 
+                                   [class.border-red-300]="userFormErrors.name"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.name" class="text-xs text-red-500">{{userFormErrors.name}}</span>
                         </div>
                         <div>
                             <label for="addUsername" class="block text-xs font-medium text-gray-500 required-field">Username</label>
-                            <input type="text" id="addUsername" [(ngModel)]="newUser.username" name="username" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="text" id="addUsername" [(ngModel)]="newUser.username" name="username" required 
+                                   [class.border-red-300]="userFormErrors.username"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.username" class="text-xs text-red-500">{{userFormErrors.username}}</span>
                         </div>
                         <div>
                             <label for="addEmail" class="block text-xs font-medium text-gray-500 required-field">Email</label>
-                            <input type="email" id="addEmail" [(ngModel)]="newUser.email" name="email" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="email" id="addEmail" [(ngModel)]="newUser.email" name="email" required 
+                                   [class.border-red-300]="userFormErrors.email"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.email" class="text-xs text-red-500">{{userFormErrors.email}}</span>
                         </div>
                         <div>
                             <label for="addPassword" class="block text-xs font-medium text-gray-500 required-field">Password</label>
-                            <input type="password" id="addPassword" [(ngModel)]="newUser.password" name="password" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="password" id="addPassword" [(ngModel)]="newUser.password" name="password" required 
+                                   [class.border-red-300]="userFormErrors.password"
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <span *ngIf="userFormErrors.password" class="text-xs text-red-500">{{userFormErrors.password}}</span>
                         </div>
                         <div>
                             <label for="addPhone" class="block text-xs font-medium text-gray-500">Phone (Optional)</label>
-                            <input type="tel" id="addPhone" [(ngModel)]="newUser.phone" name="phone" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="tel" id="addPhone" [(ngModel)]="newUser.phone" name="phone" 
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                         </div>
                         <div>
                             <label for="addGender" class="block text-xs font-medium text-gray-500">Gender</label>
-                            <select id="addGender" [(ngModel)]="newUser.gender" name="gender" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addGender" [(ngModel)]="newUser.gender" name="gender" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
@@ -764,11 +704,13 @@
                         </div>
                         <div>
                             <label for="addDob" class="block text-xs font-medium text-gray-500">Date of Birth</label>
-                            <input type="date" id="addDob" [(ngModel)]="newUser.dob" name="dob" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <input type="date" id="addDob" [(ngModel)]="newUser.dob" name="dob" 
+                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                         </div>
                         <div>
                             <label for="addDepartment" class="block text-xs font-medium text-gray-500">Department</label>
-                            <select id="addDepartment" [(ngModel)]="newUser.department" name="department" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addDepartment" [(ngModel)]="newUser.department" name="department" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">Select Department</option>
                                 <option value="development">Development</option>
                                 <option value="design">Design</option>
@@ -781,31 +723,39 @@
                         </div>
                         <div>
                             <label for="addTeam" class="block text-xs font-medium text-gray-500">Team</label>
-                            <select id="addTeam" [(ngModel)]="newUser.team" name="team" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addTeam" [(ngModel)]="newUser.team" name="team" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">No Team</option>
                                 <option *ngFor="let team of teams" [value]="team.name">{{team.name}}</option>
                             </select>
                         </div>
                         <div>
                             <label for="addRole" class="block text-xs font-medium text-gray-500">Role</label>
-                            <select id="addRole" [(ngModel)]="newUser.role" name="role" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addRole" [(ngModel)]="newUser.role" name="role" 
+                                    [class.border-red-300]="userFormErrors.role"
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="user">User</option>
                                 <option value="team-lead">Team Lead</option>
                                 <option value="admin">Admin</option>
                             </select>
+                            <span *ngIf="userFormErrors.role" class="text-xs text-red-500">{{userFormErrors.role}}</span>
                         </div>
                         <div>
                             <label for="addStatus" class="block text-xs font-medium text-gray-500">Status</label>
-                            <select id="addStatus" [(ngModel)]="newUser.status" name="status" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addStatus" [(ngModel)]="newUser.status" name="status" 
+                                    [class.border-red-300]="userFormErrors.status"
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="suspended">Suspended</option>
                                 <option value="on-leave">On Leave</option>
                             </select>
+                            <span *ngIf="userFormErrors.status" class="text-xs text-red-500">{{userFormErrors.status}}</span>
                         </div>
                         <div>
                             <label for="addEmployeeType" class="block text-xs font-medium text-gray-500">Employee Type</label>
-                            <select id="addEmployeeType" [(ngModel)]="newUser.employeeType" name="employeeType" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addEmployeeType" [(ngModel)]="newUser.employeeType" name="employeeType" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="full-time">Full-time</option>
                                 <option value="part-time">Part-time</option>
                                 <option value="contract">Contract</option>
@@ -814,7 +764,8 @@
                         </div>
                         <div>
                             <label for="addLocation" class="block text-xs font-medium text-gray-500">Location</label>
-                            <select id="addLocation" [(ngModel)]="newUser.location" name="location" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
+                            <select id="addLocation" [(ngModel)]="newUser.location" name="location" 
+                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="remote">Remote</option>
                                 <option value="office">Office</option>
                                 <option value="hybrid">Hybrid</option>
@@ -822,19 +773,24 @@
                         </div>
                         <div class="md:col-span-2">
                             <label for="addAddress" class="block text-xs font-medium text-gray-500">Address (Optional)</label>
-                            <textarea id="addAddress" [(ngModel)]="newUser.address" name="address" rows="2" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
+                            <textarea id="addAddress" [(ngModel)]="newUser.address" name="address" rows="2" 
+                                      class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
                         </div>
                         <div class="md:col-span-2">
                             <label for="addAbout" class="block text-xs font-medium text-gray-500">About (Optional)</label>
-                            <textarea id="addAbout" [(ngModel)]="newUser.about" name="about" rows="3" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
+                            <textarea id="addAbout" [(ngModel)]="newUser.about" name="about" rows="3" 
+                                      class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm"></textarea>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" (click)="closeModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        <button type="button" (click)="closeModals()" 
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
-                            Create User
+                        <button type="submit" [disabled]="isSubmitting"
+                                class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                            <span *ngIf="!isSubmitting">Create User</span>
+                            <span *ngIf="isSubmitting">Creating...</span>
                         </button>
                     </div>
                 </div>
@@ -845,7 +801,7 @@
 
 <!-- Add Team Modal -->
 <div *ngIf="showAddTeamModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Create New Team</h3>
@@ -857,11 +813,17 @@
                 <div class="space-y-4">
                     <div>
                         <label for="teamName" class="block text-xs font-medium text-gray-500 required-field">Team Name</label>
-                        <input type="text" id="teamName" [(ngModel)]="newTeam.name" name="name" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="teamName" [(ngModel)]="newTeam.name" name="name" required 
+                               [class.border-red-300]="teamFormErrors.name"
+                               class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <span *ngIf="teamFormErrors.name" class="text-xs text-red-500">{{teamFormErrors.name}}</span>
                     </div>
                     <div>
                         <label for="teamDepartment" class="block text-xs font-medium text-gray-500 required-field">Department</label>
-                        <select id="teamDepartment" [(ngModel)]="newTeam.department" name="department" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select id="teamDepartment" [(ngModel)]="newTeam.department" name="department" required 
+                                [class.border-red-300]="teamFormErrors.department"
+                                class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Department</option>
                             <option value="development">Development</option>
                             <option value="design">Design</option>
                             <option value="marketing">Marketing</option>
@@ -870,24 +832,30 @@
                             <option value="operations">Operations</option>
                             <option value="sales">Sales</option>
                         </select>
+                        <span *ngIf="teamFormErrors.department" class="text-xs text-red-500">{{teamFormErrors.department}}</span>
                     </div>
                     <div>
                         <label for="teamLead" class="block text-xs font-medium text-gray-500">Team Lead (Optional)</label>
-                        <select id="teamLead" [(ngModel)]="newTeam.lead" name="lead" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select id="teamLead" [(ngModel)]="newTeam.lead" name="lead" 
+                                class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Team Lead</option>
                             <option *ngFor="let user of users" [value]="user.name">{{user.name}}</option>
                         </select>
                     </div>
                     <div>
                         <label for="teamDescription" class="block text-xs font-medium text-gray-500">Description (Optional)</label>
-                        <textarea id="teamDescription" [(ngModel)]="newTeam.description" name="description" rows="3" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        <textarea id="teamDescription" [(ngModel)]="newTeam.description" name="description" rows="3" 
+                                  class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" (click)="closeModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        <button type="button" (click)="closeModals()" 
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
-                            Create Team
+                        <button type="submit" [disabled]="isSubmitting"
+                                class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                            <span *ngIf="!isSubmitting">Create Team</span>
+                            <span *ngIf="isSubmitting">Creating...</span>
                         </button>
                     </div>
                 </div>
@@ -898,7 +866,7 @@
 
 <!-- Add Sub-Team Modal -->
 <div *ngIf="showAddSubTeamModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Create Sub-Team</h3>
@@ -910,32 +878,43 @@
                 <div class="space-y-4">
                     <div>
                         <label for="parentTeam" class="block text-xs font-medium text-gray-500 required-field">Parent Team</label>
-                        <select id="parentTeam" [(ngModel)]="newSubTeam.parentTeam" name="parentTeam" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select id="parentTeam" [(ngModel)]="newSubTeam.parentTeam" name="parentTeam" required 
+                                [class.border-red-300]="teamFormErrors.parentTeam"
+                                class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Parent Team</option>
                             <option *ngFor="let team of teams" [value]="team.name">{{team.name}}</option>
                         </select>
+                        <span *ngIf="teamFormErrors.parentTeam" class="text-xs text-red-500">{{teamFormErrors.parentTeam}}</span>
                     </div>
                     <div>
                         <label for="subTeamName" class="block text-xs font-medium text-gray-500 required-field">Sub-Team Name</label>
-                        <input type="text" id="subTeamName" [(ngModel)]="newSubTeam.name" name="name" required class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="subTeamName" [(ngModel)]="newSubTeam.name" name="name" required 
+                               [class.border-red-300]="teamFormErrors.name"
+                               class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <span *ngIf="teamFormErrors.name" class="text-xs text-red-500">{{teamFormErrors.name}}</span>
                     </div>
                     <div>
                         <label for="subTeamLead" class="block text-xs font-medium text-gray-500">Sub-Team Lead (Optional)</label>
-                        <select id="subTeamLead" [(ngModel)]="newSubTeam.lead" name="lead" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select id="subTeamLead" [(ngModel)]="newSubTeam.lead" name="lead" 
+                                class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Sub-Team Lead</option>
                             <option *ngFor="let user of users" [value]="user.name">{{user.name}}</option>
                         </select>
                     </div>
                     <div>
                         <label for="subTeamDescription" class="block text-xs font-medium text-gray-500">Description (Optional)</label>
-                        <textarea id="subTeamDescription" [(ngModel)]="newSubTeam.description" name="description" rows="3" class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        <textarea id="subTeamDescription" [(ngModel)]="newSubTeam.description" name="description" rows="3" 
+                                  class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" (click)="closeModals()" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        <button type="button" (click)="closeModals()" 
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
-                            Create Sub-Team
+                        <button type="submit" [disabled]="isSubmitting"
+                                class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                            <span *ngIf="!isSubmitting">Create Sub-Team</span>
+                            <span *ngIf="isSubmitting">Creating...</span>
                         </button>
                     </div>
                 </div>
@@ -946,7 +925,7 @@
 
 <!-- Team Details Modal -->
 <div *ngIf="showTeamDetailsModal && selectedTeam" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">Team: {{selectedTeam.name}}</h3>
@@ -1163,135 +1142,140 @@
 
 <!-- Edit Team Modal -->
 <div *ngIf="showEditTeamModal && selectedTeam" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">Edit Team: {{selectedTeam.name}}</h3>
-        <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
-          <fa-icon [icon]="faTimes"></fa-icon>
-        </button>
-      </div>
-      <form (ngSubmit)="saveTeamEdits()">
-        <div class="space-y-4">
-          <div>
-            <label for="editTeamName" class="block text-xs font-medium text-gray-500 required-field">Team Name</label>
-            <input type="text" id="editTeamName" [(ngModel)]="selectedTeam.name" name="name" required 
-                   class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-          </div>
-          <div>
-            <label for="editTeamDepartment" class="block text-xs font-medium text-gray-500 required-field">Department</label>
-            <select id="editTeamDepartment" [(ngModel)]="selectedTeam.department" name="department" required 
-                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="development">Development</option>
-              <option value="design">Design</option>
-              <option value="marketing">Marketing</option>
-              <option value="hr">Human Resources</option>
-              <option value="finance">Finance</option>
-              <option value="operations">Operations</option>
-              <option value="sales">Sales</option>
-            </select>
-          </div>
-          <div>
-            <label for="editTeamLead" class="block text-xs font-medium text-gray-500">Team Lead</label>
-            <select id="editTeamLead" [(ngModel)]="selectedTeam.lead" name="lead" 
-                    class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="">Select Team Lead</option>
-              <option *ngFor="let user of users" [value]="user.name">{{user.name}}</option>
-            </select>
-          </div>
-          <div>
-            <label for="editTeamDescription" class="block text-xs font-medium text-gray-500">Description</label>
-            <textarea id="editTeamDescription" [(ngModel)]="selectedTeam.description" name="description" rows="3" 
-                      class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-          </div>
-          <div class="mt-6 flex justify-end space-x-3">
-            <button type="button" (click)="closeModals()" 
-                    class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-              Cancel
-            </button>
-            <button type="submit" 
-                    class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
-              Save Changes
-            </button>
-          </div>
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Team: {{selectedTeam.name}}</h3>
+                <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+            </div>
+            <form (ngSubmit)="saveTeamEdits()">
+                <div class="space-y-4">
+                    <div>
+                        <label for="editTeamName" class="block text-xs font-medium text-gray-500 required-field">Team Name</label>
+                        <input type="text" id="editTeamName" [(ngModel)]="selectedTeam.name" name="name" required 
+                               [class.border-red-300]="teamFormErrors.name"
+                               class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <span *ngIf="teamFormErrors.name" class="text-xs text-red-500">{{teamFormErrors.name}}</span>
+                    </div>
+                    <div>
+                        <label for="editTeamDepartment" class="block text-xs font-medium text-gray-500 required-field">Department</label>
+                        <select id="editTeamDepartment" [(ngModel)]="selectedTeam.department" name="department" required 
+                                [class.border-red-300]="teamFormErrors.department"
+                                class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="development">Development</option>
+                            <option value="design">Design</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="hr">Human Resources</option>
+                            <option value="finance">Finance</option>
+                            <option value="operations">Operations</option>
+                            <option value="sales">Sales</option>
+                        </select>
+                        <span *ngIf="teamFormErrors.department" class="text-xs text-red-500">{{teamFormErrors.department}}</span>
+                    </div>
+                    <div>
+                        <label for="editTeamLead" class="block text-xs font-medium text-gray-500">Team Lead</label>
+                        <select id="editTeamLead" [(ngModel)]="selectedTeam.lead" name="lead" 
+                                class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select Team Lead</option>
+                            <option *ngFor="let user of users" [value]="user.name">{{user.name}}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editTeamDescription" class="block text-xs font-medium text-gray-500">Description</label>
+                        <textarea id="editTeamDescription" [(ngModel)]="selectedTeam.description" name="description" rows="3" 
+                                  class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" (click)="closeModals()" 
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" [disabled]="isSubmitting"
+                                class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                            <span *ngIf="!isSubmitting">Save Changes</span>
+                            <span *ngIf="isSubmitting">Saving...</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-      </form>
     </div>
-  </div>
 </div>
 
 <!-- Add Member Modal -->
 <div *ngIf="showAddMemberModal && selectedTeam" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">Add Members to {{selectedTeam.name}}</h3>
-        <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
-          <fa-icon [icon]="faTimes"></fa-icon>
-        </button>
-      </div>
-      
-      <div class="mb-4">
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <fa-icon [icon]="faSearch" class="text-gray-400 text-sm"></fa-icon>
-          </div>
-          <input type="text" [(ngModel)]="memberSearchTerm" (input)="filterAvailableMembers()"
-                 class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                 placeholder="Search members...">
-        </div>
-      </div>
-      
-      <div class="max-h-96 overflow-y-auto mb-4 border border-gray-200 rounded-lg">
-        <div *ngIf="availableMembers.length === 0" class="text-center text-gray-500 py-4">
-          No available members found
-        </div>
-        
-        <div *ngFor="let member of availableMembers" 
-             class="flex items-center p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0">
-          <input type="checkbox" [id]="'member-'+member.id" 
-                 [checked]="member.selected"
-                 (change)="toggleMemberSelection(member)"
-                 class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-          
-          <label [for]="'member-'+member.id" class="ml-3 flex items-center flex-1 cursor-pointer">
-            <img [src]="member.profileImg || 'assets/images/default-profile.png'" 
-                 class="h-10 w-10 rounded-full mr-3" [alt]="member.name">
-            <div class="flex-1">
-              <div class="flex justify-between items-start">
-                <div>
-                  <div class="text-sm font-medium text-gray-900">{{member.name}}</div>
-                  <div class="text-xs text-gray-500">{{member.email}}</div>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full" [ngClass]="getStatusClass(member.status)">
-                  {{member.status | titlecase}}
-                </span>
-              </div>
-              <div class="mt-1 text-xs text-gray-500">
-                <span class="capitalize">{{member.role.replace('-', ' ')}}</span>
-                <span *ngIf="member.department" class="ml-2">{{member.department | titlecase}} Dept.</span>
-              </div>
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Add Members to {{selectedTeam.name}}</h3>
+                <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
             </div>
-          </label>
+            
+            <div class="mb-4">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <fa-icon [icon]="faSearch" class="text-gray-400 text-sm"></fa-icon>
+                    </div>
+                    <input type="text" [(ngModel)]="memberSearchTerm" (input)="filterAvailableMembers()"
+                           class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                           placeholder="Search members...">
+                </div>
+            </div>
+            
+            <div class="max-h-96 overflow-y-auto mb-4 border border-gray-200 rounded-lg">
+                <div *ngIf="availableMembers.length === 0" class="text-center text-gray-500 py-4">
+                    No available members found
+                </div>
+                
+                <div *ngFor="let member of availableMembers" 
+                     class="flex items-center p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0">
+                    <input type="checkbox" [id]="'member-'+member.id" 
+                           [checked]="member.selected"
+                           (change)="toggleMemberSelection(member)"
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    
+                    <label [for]="'member-'+member.id" class="ml-3 flex items-center flex-1 cursor-pointer">
+                        <img [src]="member.profileImg || 'assets/images/default-profile.png'" 
+                             class="h-10 w-10 rounded-full mr-3" [alt]="member.name">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{member.name}}</div>
+                                    <div class="text-xs text-gray-500">{{member.email}}</div>
+                                </div>
+                                <span class="text-xs px-2 py-1 rounded-full" [ngClass]="getStatusClass(member.status)">
+                                    {{member.status | titlecase}}
+                                </span>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-500">
+                                <span class="capitalize">{{member.role.replace('-', ' ')}}</span>
+                                <span *ngIf="member.department" class="ml-2">{{member.department | titlecase}} Dept.</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center mt-4">
+                <div class="text-sm text-gray-600" *ngIf="selectedMembers.length > 0">
+                    {{selectedMembers.length}} member(s) selected
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" (click)="closeModals()" 
+                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="button" (click)="addSelectedMembers()" [disabled]="selectedMembers.length === 0 || isAddingMembers"
+                            class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                        <span *ngIf="!isAddingMembers">Add Selected Members</span>
+                        <span *ngIf="isAddingMembers">Adding...</span>
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <div class="flex justify-between items-center mt-4">
-        <div class="text-sm text-gray-600" *ngIf="selectedMembers.length > 0">
-          {{selectedMembers.length}} member(s) selected
-        </div>
-        <div class="flex space-x-3">
-          <button type="button" (click)="closeModals()" 
-                  class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-            Cancel
-          </button>
-          <button type="button" (click)="addSelectedMembers()" 
-                  class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
-                  [disabled]="selectedMembers.length === 0">
-            Add Selected Members
-          </button>
-        </div>
-      </div>
     </div>
-  </div>
 </div>

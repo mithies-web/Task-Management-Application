@@ -87,6 +87,16 @@
                         <fa-icon [icon]="faCog" class="mr-4 text-xl"></fa-icon> Settings
                     </a>
                 </li>
+                <!-- Add this to the navigation list after Settings -->
+                <li>
+                <a 
+                    routerLink="/admin/help-center" 
+                    routerLinkActive="active-nav" 
+                    class="flex items-center py-3 px-4 rounded-lg hover:bg-gray-100 text-gray-700 text-md"
+                >
+                    <fa-icon [icon]="faQuestionCircle" class="mr-4 text-xl"></fa-icon> Help Center
+                </a>
+                </li>
             </ul>
         </div>
     </nav>

@@ -4,7 +4,7 @@ import { Auth } from '../../../core/services/auth/auth';
 import { UserRole } from '../../../model/user.model';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faUsers, faTachometerAlt, faProjectDiagram, faFileAlt, faChartBar, faChartLine, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faTachometerAlt, faProjectDiagram, faFileAlt, faChartBar, faChartLine, faCog, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-sidebar',
@@ -18,9 +18,10 @@ import { faUsers, faTachometerAlt, faProjectDiagram, faFileAlt, faChartBar, faCh
   styleUrls: ['./sidebar.css']
 })
 export class Sidebar {
+  faQuestionCircle = faQuestionCircle;
   adminName: string = 'Admin';
   adminEmail: string = 'admin@genworx.ai';
-  profileImage: string = 'public/assets/profile1.JPG';
+  profileImage: string = 'public/assets/user-images/mithies.JPG';
   logo: string = 'public/logo/logo-black.png';
 
   // Font Awesome icons

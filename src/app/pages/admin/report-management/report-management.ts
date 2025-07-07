@@ -13,49 +13,62 @@ interface Report {
   status: 'completed' | 'in-progress' | 'pending';
   filters: {
     dateRange: string;
-    teams: string;
-    status: string;
+    projects: string[];
+    teams: string[];
+    statuses: string[];
+    priority: string[];
   };
-  summary: {
-    totalProjects?: number;
-    completed?: number;
+  metrics: {
+    totalTasks?: number;
+    completedTasks?: number;
+    overdueTasks?: number;
     avgCompletionTime?: string;
-    totalHours?: number;
-    avgPerMember?: string;
-    overtimeHours?: number;
+    taskDistribution?: { [key: string]: number };
   };
   data: any[];
-  notes: string[];
+  insights: string[];
 }
 
 interface ReportForm {
   reportType: string;
   dateRange: string;
-  filter: string;
+  projects: string[];
+  teams: string[];
+  statuses: string[];
+  priority: string[];
   columns: {
+    task: boolean;
     project: boolean;
-    team: boolean;
+    assignee: boolean;
     status: boolean;
-    dates: boolean;
-    hours: boolean;
+    priority: boolean;
+    dueDate: boolean;
+    timeSpent: boolean;
   };
   format: 'table' | 'chart' | 'both';
+  includeInsights: boolean;
 }
 
 @Component({
   selector: 'app-report-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RouterModule],
   templateUrl: './report-management.html',
   styleUrls: ['./report-management.css']
 })
 export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('reportPieChart') reportPieChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('reportBarChart') reportBarChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('taskStatusChart') taskStatusChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('teamPerformanceChart') teamPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('priorityDistributionChart') priorityDistributionChartRef!: ElementRef<HTMLCanvasElement>;
 
   private isBrowser: boolean;
-  private reportPieChart: Chart | null = null;
-  private reportBarChart: Chart | null = null;
+  private taskStatusChart: Chart | null = null;
+  private teamPerformanceChart: Chart | null = null;
+  private priorityDistributionChart: Chart | null = null;
+  public currentDate: Date = new Date();
 
   activeTab = 'saved';
   showReportGenerator = false;
@@ -67,143 +80,187 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
 
   // Pagination
   currentPage = 1;
-  itemsPerPage = 6;
+  itemsPerPage = 5;
   totalPages = 1;
   paginationInfo = { start: 1, end: 6, total: 0 };
 
   tabs = [
     { id: 'saved', label: 'Saved Reports', icon: 'fa-file-alt' },
     { id: 'history', label: 'Report History', icon: 'fa-history' },
-    { id: 'custom', label: 'Custom Reports', icon: 'fa-chart-pie' }
+    { id: 'templates', label: 'Report Templates', icon: 'fa-clone' }
   ];
 
   reportForm: ReportForm = {
-    reportType: '',
+    reportType: 'task_status',
     dateRange: '30',
-    filter: 'all',
+    projects: [],
+    teams: [],
+    statuses: [],
+    priority: [],
     columns: {
+      task: true,
       project: true,
-      team: true,
+      assignee: true,
       status: true,
-      dates: false,
-      hours: false
+      priority: true,
+      dueDate: true,
+      timeSpent: false
     },
-    format: 'table'
+    format: 'both',
+    includeInsights: true
   };
+
+  // Sample data for demo purposes
+  allProjects = ['Website Redesign', 'Mobile App', 'Marketing Campaign', 'API Development'];
+  allTeams = ['Development', 'Design', 'Marketing', 'QA'];
+  allStatuses = ['Not Started', 'In Progress', 'In Review', 'Completed', 'Blocked'];
+  allPriorities = ['Critical', 'High', 'Medium', 'Low'];
 
   reports: Report[] = [
     {
       id: 1,
-      title: "Q2 Project Progress",
-      type: "Project Progress",
+      title: "Q2 Task Completion Report",
+      type: "Task Status",
       date: "15 Jun 2023",
-      description: "Progress report for all projects in Q2 with completion metrics and team performance.",
+      description: "Comprehensive report showing task completion metrics for Q2 across all teams.",
       status: "completed",
       filters: {
         dateRange: "1 Apr - 30 Jun 2023",
-        teams: "All Teams",
-        status: "All Statuses"
+        projects: ["Website Redesign", "Mobile App"],
+        teams: ["Development", "Design"],
+        statuses: ["Completed", "In Progress"],
+        priority: ["High", "Medium"]
       },
-      summary: {
-        totalProjects: 18,
-        completed: 12,
-        avgCompletionTime: "14 days"
+      metrics: {
+        totalTasks: 142,
+        completedTasks: 98,
+        overdueTasks: 12,
+        avgCompletionTime: "3.2 days",
+        taskDistribution: {
+          "Completed": 98,
+          "In Progress": 32,
+          "Not Started": 8,
+          "Blocked": 4
+        }
       },
       data: [
         {
-          projectName: "Website Redesign",
-          team: "Design",
-          startDate: "01 Apr 2023",
-          dueDate: "15 May 2023",
+          task: "Implement user authentication",
+          project: "Mobile App",
+          assignee: "John Doe",
           status: "Completed",
-          progress: 100
+          priority: "High",
+          dueDate: "15 May 2023",
+          timeSpent: "8h 30m"
         },
         {
-          projectName: "Mobile App Development",
-          team: "Development",
-          startDate: "10 Apr 2023",
-          dueDate: "30 Jun 2023",
+          task: "Design dashboard UI",
+          project: "Website Redesign",
+          assignee: "Jane Smith",
           status: "In Progress",
-          progress: 75
+          priority: "Medium",
+          dueDate: "25 Jun 2023",
+          timeSpent: "5h 15m"
         },
         {
-          projectName: "Marketing Campaign",
-          team: "Marketing",
-          startDate: "15 May 2023",
-          dueDate: "30 Jun 2023",
-          status: "Pending",
-          progress: 20
+          task: "API integration testing",
+          project: "Mobile App",
+          assignee: "Mike Johnson",
+          status: "In Review",
+          priority: "High",
+          dueDate: "20 Jun 2023",
+          timeSpent: "12h 45m"
         }
       ],
-      notes: [
-        "Design team completed all projects ahead of schedule",
-        "Development team has 2 projects at risk of missing deadlines",
-        "Overall completion rate improved by 15% compared to Q1"
+      insights: [
+        "Development team completed 92% of high priority tasks on time",
+        "Design team has 3 overdue tasks needing attention",
+        "Average completion time improved by 18% compared to Q1"
       ]
     },
     {
       id: 2,
-      title: "Development Team Analysis",
+      title: "Team Performance - May 2023",
       type: "Team Performance",
       date: "1 Jun 2023",
-      description: "Detailed analysis of development team performance with task completion rates.",
+      description: "Team-wise performance metrics including task completion rates and time efficiency.",
       status: "in-progress",
       filters: {
         dateRange: "1 May - 31 May 2023",
-        teams: "Development Team",
-        status: "Active Projects"
+        projects: ["All Projects"],
+        teams: ["Development", "Design", "Marketing"],
+        statuses: ["All Statuses"],
+        priority: ["All Priorities"]
       },
-      summary: {
-        totalProjects: 8,
-        completed: 3,
-        avgCompletionTime: "18 days"
+      metrics: {
+        totalTasks: 187,
+        completedTasks: 132,
+        overdueTasks: 18,
+        avgCompletionTime: "2.8 days",
+        taskDistribution: {
+          "Development": 84,
+          "Design": 56,
+          "Marketing": 47
+        }
       },
       data: [
         {
-          projectName: "API Integration",
           team: "Development",
-          startDate: "01 May 2023",
-          dueDate: "20 Jun 2023",
-          status: "In Progress",
-          progress: 60
+          tasksCompleted: 84,
+          completionRate: "92%",
+          avgTimeSpent: "4.2h/task",
+          overdueTasks: 5
         },
         {
-          projectName: "Backend Optimization",
-          team: "Development",
-          startDate: "10 May 2023",
-          dueDate: "25 Jun 2023",
-          status: "In Progress",
-          progress: 45
+          team: "Design",
+          tasksCompleted: 56,
+          completionRate: "88%",
+          avgTimeSpent: "3.8h/task",
+          overdueTasks: 7
+        },
+        {
+          team: "Marketing",
+          tasksCompleted: 47,
+          completionRate: "85%",
+          avgTimeSpent: "5.1h/task",
+          overdueTasks: 6
         }
       ],
-      notes: [
-        "Development team is working on 5 active projects",
-        "Two projects are behind schedule by 1-2 weeks"
+      insights: [
+        "Development team leads in completion rate (92%)",
+        "Marketing tasks take longer on average (5.1h vs 4.2h for Development)",
+        "7% of all tasks were overdue this month"
       ]
     }
   ];
 
   reportHistory = [
-    { name: "Q2 Performance Review", type: "Team Performance", generatedBy: "Admin User", date: "15 Jun 2023" },
-    { name: "May Time Tracking", type: "Time Tracking", generatedBy: "Admin User", date: "31 May 2023" }
+    { name: "Weekly Status Report", type: "Task Status", generatedBy: "Admin User", date: "12 Jun 2023", exportedAs: "PDF" },
+    { name: "Team Performance Review", type: "Team Performance", generatedBy: "Admin User", date: "5 Jun 2023", exportedAs: "Excel" },
+    { name: "Project Health Dashboard", type: "Project Summary", generatedBy: "Project Manager", date: "1 Jun 2023", exportedAs: "PDF" }
   ];
 
-  customTemplates = [
+  reportTemplates = [
     {
-      name: "Monthly Project Status",
-      lastUsed: "31 May 2023",
-      description: "Standard monthly project status report with completion metrics.",
-      badge: "Favorite",
-      badgeClass: "bg-blue-100 text-blue-800",
-      badgeIcon: "fa-star"
+      name: "Weekly Status Report",
+      type: "Task Status",
+      lastUsed: "12 Jun 2023",
+      description: "Standard weekly report showing task completion status across all projects.",
+      isFavorite: true
     },
     {
       name: "Team Performance",
-      lastUsed: "15 Jun 2023",
-      description: "Detailed team performance metrics with comparison charts.",
-      badge: "Recently Used",
-      badgeClass: "bg-gray-100 text-gray-800",
-      badgeIcon: "fa-clock"
+      type: "Team Performance",
+      lastUsed: "5 Jun 2023",
+      description: "Team-wise performance metrics including completion rates and time efficiency.",
+      isFavorite: false
+    },
+    {
+      name: "Project Health",
+      type: "Project Summary",
+      lastUsed: "1 Jun 2023",
+      description: "Detailed overview of project progress, risks, and upcoming milestones.",
+      isFavorite: true
     }
   ];
 
@@ -231,11 +288,14 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
-    if (this.reportPieChart) {
-      this.reportPieChart.destroy();
+    if (this.taskStatusChart) {
+      this.taskStatusChart.destroy();
     }
-    if (this.reportBarChart) {
-      this.reportBarChart.destroy();
+    if (this.teamPerformanceChart) {
+      this.teamPerformanceChart.destroy();
+    }
+    if (this.priorityDistributionChart) {
+      this.priorityDistributionChart.destroy();
     }
   }
 
@@ -246,6 +306,9 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
 
   toggleReportGenerator() {
     this.showReportGenerator = !this.showReportGenerator;
+    if (!this.showReportGenerator) {
+      this.resetReportForm();
+    }
   }
 
   toggleAdvancedOptions() {
@@ -266,19 +329,21 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
 
     const newReport: Report = {
       id: this.reports.length + 1,
-      title: `New ${this.getReportTypeLabel(this.reportForm.reportType)}`,
+      title: this.generateReportTitle(),
       type: this.getReportTypeLabel(this.reportForm.reportType),
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-      description: `Automatically generated ${this.getReportTypeLabel(this.reportForm.reportType)}`,
+      description: this.generateReportDescription(),
       status: "completed",
       filters: {
         dateRange: this.getDateRangeLabel(this.reportForm.dateRange),
-        teams: this.getFilterLabel(this.reportForm.filter),
-        status: "All Statuses"
+        projects: this.reportForm.projects.length > 0 ? this.reportForm.projects : ['All Projects'],
+        teams: this.reportForm.teams.length > 0 ? this.reportForm.teams : ['All Teams'],
+        statuses: this.reportForm.statuses.length > 0 ? this.reportForm.statuses : ['All Statuses'],
+        priority: this.reportForm.priority.length > 0 ? this.reportForm.priority : ['All Priorities']
       },
-      summary: this.reports[0].summary,
-      data: this.reports[0].data,
-      notes: ["This is an automatically generated report"]
+      metrics: this.generateSampleMetrics(),
+      data: this.generateSampleData(),
+      insights: this.reportForm.includeInsights ? this.generateSampleInsights() : []
     };
 
     this.reports.unshift(newReport);
@@ -325,25 +390,60 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
     this.selectedReport = null;
   }
 
-  exportReport(reportId: number) {
+  exportReport(reportId: number, format: string = 'pdf') {
     const report = this.reports.find(r => r.id === reportId);
     if (report && this.isBrowser) {
-      console.log('Exporting report:', report.title);
-      alert(`Exporting ${report.title} as PDF...`);
+      console.log(`Exporting ${report.title} as ${format.toUpperCase()}`);
+      alert(`Exporting ${report.title} as ${format.toUpperCase()}...`);
+      // In a real app, this would trigger actual export functionality
     }
   }
 
   exportAs(format: string) {
-    if (this.selectedReport && this.isBrowser) {
-      console.log(`Exporting ${this.selectedReport.title} as ${format.toUpperCase()}`);
-      alert(`Exporting ${this.selectedReport.title} as ${format.toUpperCase()}...`);
+    if (this.selectedReport) {
+      this.exportReport(this.selectedReport.id, format);
     }
     this.showExportDropdown = false;
   }
 
   printReport() {
     if (this.isBrowser) {
+      // Add print-specific styling
+      const printStyle = document.createElement('style');
+      printStyle.innerHTML = `
+        @page {
+          size: A4;
+          margin: 1cm;
+        }
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-section, .print-section * {
+            visibility: visible;
+          }
+          .print-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .page-break {
+            page-break-after: always;
+          }
+        }
+      `;
+      document.head.appendChild(printStyle);
+      
       window.print();
+      
+      // Clean up
+      setTimeout(() => {
+        document.head.removeChild(printStyle);
+      }, 1000);
     }
   }
 
@@ -424,57 +524,82 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getFilterTags(report: Report): string[] {
-    return [
+    const tags = [
       `Date Range: ${report.filters.dateRange}`,
-      `Teams: ${report.filters.teams}`,
-      `Status: ${report.filters.status}`
+      `Projects: ${report.filters.projects.join(', ')}`,
+      `Teams: ${report.filters.teams.join(', ')}`,
+      `Statuses: ${report.filters.statuses.join(', ')}`,
+      `Priorities: ${report.filters.priority.join(', ')}`
     ];
+    return tags.filter(tag => !tag.includes(': All '));
   }
 
-  getSummaryCards(report: Report): any[] {
-    if (report.type.includes('Project') || report.type.includes('Team')) {
+  getMetricCards(report: Report): any[] {
+    if (report.type.includes('Task Status') || report.type.includes('Project Summary')) {
       return [
         {
-          label: 'Total Projects',
-          value: report.summary.totalProjects?.toString() || '0',
+          label: 'Total Tasks',
+          value: report.metrics.totalTasks?.toString() || '0',
+          icon: 'fa-tasks',
           bgColor: 'bg-blue-50',
           textColor: 'text-blue-800',
           valueColor: 'text-blue-900'
         },
         {
           label: 'Completed',
-          value: `${report.summary.completed} (${Math.round(((report.summary.completed || 0) / (report.summary.totalProjects || 1)) * 100)}%)`,
+          value: `${report.metrics.completedTasks} (${Math.round(((report.metrics.completedTasks || 0) / (report.metrics.totalTasks || 1)) * 100)}%)`,
+          icon: 'fa-check-circle',
           bgColor: 'bg-green-50',
           textColor: 'text-green-800',
           valueColor: 'text-green-900'
         },
         {
-          label: 'Avg. Completion Time',
-          value: report.summary.avgCompletionTime || '0 days',
+          label: 'Overdue',
+          value: report.metrics.overdueTasks?.toString() || '0',
+          icon: 'fa-exclamation-triangle',
+          bgColor: 'bg-red-50',
+          textColor: 'text-red-800',
+          valueColor: 'text-red-900'
+        },
+        {
+          label: 'Avg. Time',
+          value: report.metrics.avgCompletionTime || 'N/A',
+          icon: 'fa-clock',
           bgColor: 'bg-purple-50',
           textColor: 'text-purple-800',
           valueColor: 'text-purple-900'
         }
       ];
-    } else if (report.type.includes('Time')) {
+    } else if (report.type.includes('Team Performance')) {
       return [
         {
-          label: 'Total Hours',
-          value: report.summary.totalHours?.toString() || '0',
+          label: 'Teams',
+          value: report.filters.teams.join(', ') || 'All Teams',
+          icon: 'fa-users',
           bgColor: 'bg-blue-50',
           textColor: 'text-blue-800',
           valueColor: 'text-blue-900'
         },
         {
-          label: 'Avg. Per Member',
-          value: report.summary.avgPerMember || '0 hours',
+          label: 'Tasks Completed',
+          value: report.metrics.completedTasks?.toString() || '0',
+          icon: 'fa-check',
           bgColor: 'bg-green-50',
           textColor: 'text-green-800',
           valueColor: 'text-green-900'
         },
         {
-          label: 'Overtime Hours',
-          value: report.summary.overtimeHours?.toString() || '0',
+          label: 'Completion Rate',
+          value: `${Math.round(((report.metrics.completedTasks || 0) / (report.metrics.totalTasks || 1)) * 100)}%`,
+          icon: 'fa-percent',
+          bgColor: 'bg-yellow-50',
+          textColor: 'text-yellow-800',
+          valueColor: 'text-yellow-900'
+        },
+        {
+          label: 'Avg. Time',
+          value: report.metrics.avgCompletionTime || 'N/A',
+          icon: 'fa-clock',
           bgColor: 'bg-purple-50',
           textColor: 'text-purple-800',
           valueColor: 'text-purple-900'
@@ -501,21 +626,21 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
         let statusClass = '';
         if (value === 'Completed') statusClass = 'bg-green-100 text-green-800';
         else if (value === 'In Progress') statusClass = 'bg-blue-100 text-blue-800';
-        else if (value === 'Pending') statusClass = 'bg-yellow-100 text-yellow-800';
+        else if (value === 'Not Started') statusClass = 'bg-gray-100 text-gray-800';
+        else if (value === 'In Review') statusClass = 'bg-yellow-100 text-yellow-800';
+        else if (value === 'Blocked') statusClass = 'bg-red-100 text-red-800';
         else statusClass = 'bg-gray-100 text-gray-800';
         
         return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">${value}</span>`;
-      } else if (key === 'progress') {
-        let progressColor = '';
-        if (value >= 80) progressColor = 'bg-green-600';
-        else if (value >= 50) progressColor = 'bg-blue-600';
-        else progressColor = 'bg-yellow-400';
+      } else if (key === 'priority') {
+        let priorityClass = '';
+        if (value === 'Critical') priorityClass = 'bg-red-100 text-red-800';
+        else if (value === 'High') priorityClass = 'bg-orange-100 text-orange-800';
+        else if (value === 'Medium') priorityClass = 'bg-yellow-100 text-yellow-800';
+        else if (value === 'Low') priorityClass = 'bg-green-100 text-green-800';
+        else priorityClass = 'bg-gray-100 text-gray-800';
         
-        return `
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="${progressColor} h-2 rounded-full" style="width: ${value}%"></div>
-          </div>
-        `;
+        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityClass}">${value}</span>`;
       } else {
         return value?.toString() || '';
       }
@@ -524,85 +649,97 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
 
   private getReportTypeLabel(type: string): string {
     switch (type) {
-      case 'project_progress': return 'Project Progress Report';
-      case 'task_completion': return 'Task Completion Report';
+      case 'task_status': return 'Task Status Report';
       case 'team_performance': return 'Team Performance Report';
+      case 'project_summary': return 'Project Summary Report';
       case 'time_tracking': return 'Time Tracking Report';
-      case 'custom': return 'Custom Report';
-      default: return 'Report';
+      default: return 'Custom Report';
     }
   }
 
   private getDateRangeLabel(range: string): string {
+    const today = new Date();
+    const prevDate = new Date();
+    
     switch (range) {
-      case '7': return 'Last 7 Days';
-      case '30': return 'Last 30 Days';
-      case '90': return 'Last Quarter';
-      case '365': return 'This Year';
-      case 'custom': return 'Custom Range';
-      default: return 'Unknown Range';
-    }
-  }
-
-  private getFilterLabel(filter: string): string {
-    switch (filter) {
-      case 'all': return 'All Teams & Projects';
-      case 'development': return 'Development Team';
-      case 'design': return 'Design Team';
-      case 'marketing': return 'Marketing Team';
-      case 'specific': return 'Specific Project';
-      default: return 'Unknown Filter';
+      case '7':
+        prevDate.setDate(today.getDate() - 7);
+        return `Last 7 Days (${prevDate.toLocaleDateString()} - ${today.toLocaleDateString()})`;
+      case '30':
+        prevDate.setDate(today.getDate() - 30);
+        return `Last 30 Days (${prevDate.toLocaleDateString()} - ${today.toLocaleDateString()})`;
+      case '90':
+        prevDate.setDate(today.getDate() - 90);
+        return `Last Quarter (${prevDate.toLocaleDateString()} - ${today.toLocaleDateString()})`;
+      case '365':
+        prevDate.setDate(today.getDate() - 365);
+        return `Last Year (${prevDate.toLocaleDateString()} - ${today.toLocaleDateString()})`;
+      case 'custom':
+        return 'Custom Date Range';
+      default:
+        return 'All Time';
     }
   }
 
   private resetReportForm() {
     this.reportForm = {
-      reportType: '',
+      reportType: 'task_status',
       dateRange: '30',
-      filter: 'all',
+      projects: [],
+      teams: [],
+      statuses: [],
+      priority: [],
       columns: {
+        task: true,
         project: true,
-        team: true,
+        assignee: true,
         status: true,
-        dates: false,
-        hours: false
+        priority: true,
+        dueDate: true,
+        timeSpent: false
       },
-      format: 'table'
+      format: 'both',
+      includeInsights: true
     };
     this.showAdvancedOptions = false;
   }
 
   private initializeCharts() {
     if (this.selectedReport) {
-      this.createReportPieChart();
-      this.createReportBarChart();
+      this.createTaskStatusChart();
+      this.createTeamPerformanceChart();
+      this.createPriorityDistributionChart();
     }
   }
 
-  private createReportPieChart() {
-    if (!this.reportPieChartRef?.nativeElement || !this.selectedReport) return;
+  private createTaskStatusChart() {
+    if (!this.taskStatusChartRef?.nativeElement || !this.selectedReport) return;
 
-    const ctx = this.reportPieChartRef.nativeElement.getContext('2d');
+    const ctx = this.taskStatusChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    if (this.reportPieChart) {
-      this.reportPieChart.destroy();
+    if (this.taskStatusChart) {
+      this.taskStatusChart.destroy();
     }
 
-    const config: ChartConfiguration<'pie'> = {
-      type: 'pie',
+    const statusData = this.selectedReport.metrics.taskDistribution || {
+      'Completed': 0,
+      'In Progress': 0,
+      'Not Started': 0,
+      'Blocked': 0
+    };
+
+    const config: ChartConfiguration<'doughnut'> = {
+      type: 'doughnut',
       data: {
-        labels: ['Completed', 'In Progress', 'Pending'],
+        labels: Object.keys(statusData),
         datasets: [{
-          data: [
-            this.selectedReport.data.filter(p => p.status === 'Completed').length,
-            this.selectedReport.data.filter(p => p.status === 'In Progress').length,
-            this.selectedReport.data.filter(p => p.status === 'Pending').length
-          ],
+          data: Object.values(statusData),
           backgroundColor: [
             '#10b981',
             '#3b82f6',
-            '#f59e0b'
+            '#9ca3af',
+            '#ef4444'
           ],
           borderWidth: 0
         }]
@@ -612,40 +749,55 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
+            position: 'right',
+          },
+          title: {
+            display: true,
+            text: 'Task Status Distribution',
+            font: {
+              size: 14
+            }
           }
-        }
+        },
+        cutout: '70%'
       }
     };
 
-    this.reportPieChart = new Chart(ctx, config);
+    this.taskStatusChart = new Chart(ctx, config);
   }
 
-  private createReportBarChart() {
-    if (!this.reportBarChartRef?.nativeElement || !this.selectedReport) return;
+  private createTeamPerformanceChart() {
+    if (!this.teamPerformanceChartRef?.nativeElement || !this.selectedReport) return;
 
-    const ctx = this.reportBarChartRef.nativeElement.getContext('2d');
+    const ctx = this.teamPerformanceChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    if (this.reportBarChart) {
-      this.reportBarChart.destroy();
+    if (this.teamPerformanceChart) {
+      this.teamPerformanceChart.destroy();
     }
 
-    // Group by team for the bar chart
-    const teams = [...new Set(this.selectedReport.data.map(item => item.team))];
-    const teamData = teams.map(team => {
-      const teamProjects = this.selectedReport!.data.filter(p => p.team === team);
-      const avgProgress = teamProjects.reduce((sum, project) => sum + (project.progress || 0), 0) / teamProjects.length;
-      return Math.round(avgProgress);
-    });
+    let teamData = [];
+    if (this.selectedReport.type.includes('Team Performance')) {
+      teamData = this.selectedReport.data.map(team => ({
+        team: team.team,
+        completionRate: parseFloat(team.completionRate)
+      }));
+    } else {
+      // For other report types, we'll create sample data
+      teamData = [
+        { team: 'Development', completionRate: 92 },
+        { team: 'Design', completionRate: 88 },
+        { team: 'Marketing', completionRate: 85 }
+      ];
+    }
 
     const config: ChartConfiguration = {
       type: 'bar',
       data: {
-        labels: teams,
+        labels: teamData.map(item => item.team),
         datasets: [{
-          label: 'Completion %',
-          data: teamData,
+          label: 'Completion Rate %',
+          data: teamData.map(item => item.completionRate),
           backgroundColor: [
             'rgba(99, 102, 241, 0.8)',
             'rgba(16, 185, 129, 0.8)',
@@ -661,6 +813,13 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
         plugins: {
           legend: {
             display: false
+          },
+          title: {
+            display: true,
+            text: 'Team Performance',
+            font: {
+              size: 14
+            }
           }
         },
         scales: {
@@ -677,6 +836,175 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
       }
     };
 
-    this.reportBarChart = new Chart(ctx, config);
+    this.teamPerformanceChart = new Chart(ctx, config);
+  }
+
+  private createPriorityDistributionChart() {
+    if (!this.priorityDistributionChartRef?.nativeElement || !this.selectedReport) return;
+
+    const ctx = this.priorityDistributionChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    if (this.priorityDistributionChart) {
+      this.priorityDistributionChart.destroy();
+    }
+
+    // Sample priority data - in a real app this would come from the report data
+    const priorityData = {
+      'Critical': 8,
+      'High': 24,
+      'Medium': 45,
+      'Low': 15
+    };
+
+    const config: ChartConfiguration<'pie'> = {
+      type: 'pie',
+      data: {
+        labels: Object.keys(priorityData),
+        datasets: [{
+          data: Object.values(priorityData),
+          backgroundColor: [
+            '#ef4444',
+            '#f97316',
+            '#eab308',
+            '#22c55e'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+          },
+          title: {
+            display: true,
+            text: 'Priority Distribution',
+            font: {
+              size: 14
+            }
+          }
+        }
+      }
+    };
+
+    this.priorityDistributionChart = new Chart(ctx, config);
+  }
+
+  // Helper methods for report generation
+  private generateReportTitle(): string {
+    const type = this.getReportTypeLabel(this.reportForm.reportType);
+    const dateRange = this.getDateRangeLabel(this.reportForm.dateRange).split(' ')[0];
+    return `${dateRange} ${type}`;
+  }
+
+  private generateReportDescription(): string {
+    const type = this.getReportTypeLabel(this.reportForm.reportType);
+    const dateRange = this.getDateRangeLabel(this.reportForm.dateRange);
+    let description = `This ${type.toLowerCase()} covers ${dateRange.toLowerCase()}.`;
+    
+    if (this.reportForm.projects.length > 0) {
+      description += ` Focused on ${this.reportForm.projects.length > 1 ? 'projects' : 'project'}: ${this.reportForm.projects.join(', ')}.`;
+    }
+    
+    if (this.reportForm.teams.length > 0) {
+      description += ` Includes data for ${this.reportForm.teams.length > 1 ? 'teams' : 'team'}: ${this.reportForm.teams.join(', ')}.`;
+    }
+    
+    return description;
+  }
+
+  private generateSampleMetrics(): any {
+    const metrics: any = {
+      totalTasks: Math.floor(Math.random() * 200) + 50,
+      completedTasks: 0,
+      overdueTasks: 0,
+      avgCompletionTime: ''
+    };
+    
+    metrics.completedTasks = Math.floor(metrics.totalTasks * (0.7 + Math.random() * 0.25));
+    metrics.overdueTasks = Math.floor(metrics.totalTasks * (0.05 + Math.random() * 0.1));
+    metrics.avgCompletionTime = (1.5 + Math.random() * 3).toFixed(1) + ' days';
+    
+    if (this.reportForm.reportType === 'task_status') {
+      metrics.taskDistribution = {
+        'Completed': metrics.completedTasks,
+        'In Progress': Math.floor((metrics.totalTasks - metrics.completedTasks) * 0.7),
+        'Not Started': Math.floor((metrics.totalTasks - metrics.completedTasks) * 0.2),
+        'Blocked': Math.floor((metrics.totalTasks - metrics.completedTasks) * 0.1)
+      };
+    }
+    
+    return metrics;
+  }
+
+  private generateSampleData(): any[] {
+    const data = [];
+    const sampleTasks = [
+      'Implement user authentication',
+      'Design dashboard UI',
+      'API integration testing',
+      'Write documentation',
+      'Fix critical bugs',
+      'Optimize database queries',
+      'Create marketing materials',
+      'User acceptance testing',
+      'Deploy to production',
+      'Performance testing'
+    ];
+    
+    const sampleAssignees = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Williams', 'David Brown'];
+    
+    if (this.reportForm.reportType === 'task_status') {
+      for (let i = 0; i < 10; i++) {
+        data.push({
+          task: sampleTasks[Math.floor(Math.random() * sampleTasks.length)],
+          project: this.allProjects[Math.floor(Math.random() * this.allProjects.length)],
+          assignee: sampleAssignees[Math.floor(Math.random() * sampleAssignees.length)],
+          status: this.allStatuses[Math.floor(Math.random() * this.allStatuses.length)],
+          priority: this.allPriorities[Math.floor(Math.random() * this.allPriorities.length)],
+          dueDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000)
+            .toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          timeSpent: `${Math.floor(Math.random() * 10) + 1}h ${Math.floor(Math.random() * 60)}m`
+        });
+      }
+    } else if (this.reportForm.reportType === 'team_performance') {
+      const teams = this.reportForm.teams.length > 0 ? this.reportForm.teams : this.allTeams;
+      teams.forEach(team => {
+        const tasks = Math.floor(Math.random() * 50) + 20;
+        const completed = Math.floor(tasks * (0.8 + Math.random() * 0.15));
+        data.push({
+          team,
+          tasksCompleted: completed,
+          completionRate: `${Math.round((completed / tasks) * 100)}%`,
+          avgTimeSpent: `${(3 + Math.random() * 2).toFixed(1)}h/task`,
+          overdueTasks: Math.floor(tasks * (0.05 + Math.random() * 0.1))
+        });
+      });
+    }
+    
+    return data;
+  }
+
+  private generateSampleInsights(): string[] {
+    const insights = [];
+    
+    if (this.reportForm.reportType === 'task_status') {
+      insights.push(
+        `${Math.floor(70 + Math.random() * 20)}% of high priority tasks were completed on time`,
+        `${Math.floor(1 + Math.random() * 5)} tasks are blocked and need attention`,
+        `Average completion time is ${(2 + Math.random() * 3).toFixed(1)} days`
+      );
+    } else if (this.reportForm.reportType === 'team_performance') {
+      insights.push(
+        `${this.reportForm.teams.length > 0 ? this.reportForm.teams[0] : 'Development'} team has the highest completion rate`,
+        `${Math.floor(5 + Math.random() * 10)}% of all tasks were overdue this period`,
+        `Tasks take an average of ${(3 + Math.random() * 2).toFixed(1)} hours to complete`
+      );
+    }
+    
+    return insights;
   }
 }

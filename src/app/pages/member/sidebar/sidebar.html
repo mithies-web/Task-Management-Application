@@ -1,0 +1,93 @@
+<div 
+  [class.open]="isMobileSidebarOpen"
+  class="sidebar text-white flex flex-col">
+  <!-- Fixed header section -->
+  <div class="p-8 border-b border-indigo-600 flex-shrink-0">
+    <div class="flex items-center space-x-5">
+      <div class="h-16 w-16 rounded-full bg-indigo-500 flex items-center justify-center shadow-md">
+        <i class="fas fa-user text-2xl"></i>
+      </div>
+      <div>
+        <div class="font-semibold text-xl">{{ currentUser?.name }}</div>
+        <div class="text-base text-indigo-200 mt-1">Project: Website Redesign</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scrollable content section -->
+  <div class="flex-1 overflow-y-auto">
+    <nav class="p-8">
+      <div class="mb-10">
+        <div class="text-sm uppercase text-indigo-300 mb-4 tracking-wider font-medium">Navigation</div>
+        <ul class="space-y-3">
+          <li>
+            <a 
+              [routerLink]="['/member/dashboard']"
+              [class]="'nav-link flex items-center rounded-xl hover:bg-indigo-700 ' + getActiveClass('dashboard')"
+              (click)="toggleSidebar.emit()">
+              <i class="fas fa-tachometer-alt text-xl mr-5"></i> Dashboard
+            </a>
+          </li>
+          <li>
+            <a 
+              [routerLink]="['/member/timeline']"
+              [class]="'nav-link flex items-center rounded-xl hover:bg-indigo-700 ' + getActiveClass('timeline')"
+              (click)="toggleSidebar.emit()">
+              <i class="fas fa-calendar-alt text-xl mr-5"></i> Timeline
+            </a>
+          </li>
+          <li>
+            <a 
+              [routerLink]="['/member/backlogs']"
+              [class]="'nav-link flex items-center rounded-xl hover:bg-indigo-700 ' + getActiveClass('backlogs')"
+              (click)="toggleSidebar.emit()">
+              <i class="fas fa-tasks text-xl mr-5"></i> Backlogs
+            </a>
+          </li>
+          <li>
+            <a 
+              [routerLink]="['/member/boards']"
+              [class]="'nav-link flex items-center rounded-xl hover:bg-indigo-700 ' + getActiveClass('boards')"
+              (click)="toggleSidebar.emit()">
+              <i class="fas fa-columns text-xl mr-5"></i> Boards
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="mb-10">
+        <div class="text-sm uppercase text-indigo-300 mb-4 tracking-wider font-medium">Your Projects</div>
+        <ul class="space-y-3">
+          <li>
+            <a href="#" class="block px-4 py-3 rounded-xl text-lg hover:bg-indigo-700 transition-colors">
+              <span class="flex items-center">
+                <span class="h-3.5 w-3.5 rounded-full bg-green-400 mr-4"></span>
+                Website Redesign
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="block px-4 py-3 rounded-xl text-lg hover:bg-indigo-700 transition-colors">
+              <span class="flex items-center">
+                <span class="h-3.5 w-3.5 rounded-full bg-yellow-400 mr-4"></span>
+                Mobile App Development
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="block px-4 py-3 rounded-xl text-lg hover:bg-indigo-700 transition-colors">
+              <i class="fas fa-folder-open text-lg mr-4"></i> View All Projects
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="pb-8">
+        <div class="text-sm uppercase text-indigo-300 mb-4 tracking-wider font-medium">Quick Actions</div>
+        <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-6 rounded-xl text-lg font-medium shadow-md transition-colors">
+          <i class="fas fa-file-alt mr-3"></i> Create Report
+        </button>
+      </div>
+    </nav>
+  </div>
+</div>

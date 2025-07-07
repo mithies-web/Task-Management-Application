@@ -2,6 +2,17 @@
 <div class="flex-1 flex flex-col overflow-hidden">
   <!-- Main Content Area -->
   <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+    <!-- Tabs Navigation -->
+    <div class="flex border-b border-gray-200 mb-6">
+      <button 
+        *ngFor="let tab of tabs"
+        (click)="setActiveTab(tab.id)"
+        class="px-4 py-2 text-md font-medium"
+        [ngClass]="activeTab === tab.id ? 'tab-button active' : 'tab-button'">
+        <i [class]="tab.icon + ' mr-2'"></i> {{ tab.label }}
+      </button>
+    </div>
+
     <!-- Two Column Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Content Editing Section -->
@@ -21,19 +32,8 @@
           </div>
         </div>
 
-        <!-- Tabs Navigation -->
-        <div class="flex border-b border-gray-200 mb-6">
-          <button 
-            *ngFor="let tab of tabs"
-            (click)="setActiveTab(tab.id)"
-            class="px-4 py-2 text-sm font-medium transition-colors duration-200"
-            [ngClass]="activeTab === tab.id ? 'tab-button active' : 'tab-button'">
-            {{ tab.label }}
-          </button>
-        </div>
-
         <!-- Home Tab Content -->
-        <div *ngIf="activeTab === 'home'" class="tab-content">
+        <div *ngIf="activeTab === 'home'" class="tab-content active">
           <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4">
             <h3 class="text-base font-semibold text-gray-800 mb-3">Hero Banner</h3>
             <div class="space-y-3">

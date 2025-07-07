@@ -49,20 +49,26 @@ interface TestimonialItem {
 @Component({
   selector: 'app-content-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RouterModule
+  ],
   templateUrl: './content-management.html',
   styleUrls: ['./content-management.css']
 })
 export class ContentManagement implements OnInit {
   activeTab = 'home';
   previewMode = 'desktop';
+  homepage: string = 'public/assets/homeimage.png';
+  aboutimage: string = 'public/assets/ss.png';
 
   tabs = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'About' },
-    { id: 'features', label: 'Features' },
-    { id: 'testimonials', label: 'Testimonials' },
-    { id: 'contact', label: 'Contact' }
+    { id: 'home', label: 'Home', icon: 'fas fa-home' },
+    { id: 'about', label: 'About', icon: 'fas fa-info-circle' },
+    { id: 'features', label: 'Features', icon: 'fas fa-star' },
+    { id: 'testimonials', label: 'Testimonials', icon: 'fas fa-comment' },
+    { id: 'contact', label: 'Contact', icon: 'fas fa-envelope' }
   ];
 
   contentData: ContentData = {

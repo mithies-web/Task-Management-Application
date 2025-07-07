@@ -76,7 +76,7 @@ export class Settings implements OnInit {
     name: 'Admin User',
     email: 'admin@genworx.ai',
     phone: '+91 63383350764',
-    profilePicture: 'public/assets/profile1.JPG'
+    profilePicture: 'public/assets/user-images/mithies.JPG'
 
   };
 

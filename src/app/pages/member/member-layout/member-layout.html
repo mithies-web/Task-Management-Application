@@ -1,0 +1,75 @@
+<div class="flex h-screen overflow-hidden bg-gray-50">
+  <!-- Mobile Sidebar Toggle -->
+  <button 
+    (click)="toggleMobileSidebar()"
+    class="md:hidden fixed top-6 left-6 z-40 p-3 rounded-xl bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-colors">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+  
+  <!-- Sidebar Component -->
+  <app-sidebar
+    [currentUser]="currentUser"
+    [activePage]="activePage"
+    [isMobileSidebarOpen]="isMobileSidebarOpen"
+    (toggleSidebar)="toggleMobileSidebar()">
+  </app-sidebar>
+  
+  <!-- Main Content -->
+  <div class="main-content flex flex-col overflow-hidden">
+    <!-- Top Navigation -->
+    <header class="bg-white shadow-lg">
+      <div class="flex items-center justify-between px-10 py-5">
+        <div class="flex items-center space-x-4">
+          <img src="assets/logo/favlogo.png" alt="Logo" class="w-12 h-12">
+          <div class="text-3xl font-bold text-indigo-800">GenFlow</div>
+        </div>
+        
+        <div class="flex items-center space-x-8">
+          <button class="text-gray-600 hover:text-indigo-600 relative transition-colors">
+            <i class="fas fa-bell text-2xl"></i>
+            <span class="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-500"></span>
+          </button>
+          
+          <div class="relative">
+            <button 
+              (click)="toggleUserMenu()"
+              class="flex items-center space-x-4 focus:outline-none">
+              <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center shadow-md">
+                <i class="fas fa-user text-indigo-600 text-2xl"></i>
+              </div>
+              <span class="text-lg font-medium">{{ currentUser?.name }}</span>
+              <i class="fas fa-chevron-down text-base"></i>
+            </button>
+            
+            <div 
+              [class.hidden]="!isUserMenuOpen"
+              class="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-xl py-2 z-10 border border-gray-200">
+              <a 
+                [routerLink]="['/member/profile']"
+                (click)="closeUserMenu()"
+                class="block px-6 py-3 text-lg text-gray-700 hover:bg-gray-100 transition-colors">
+                <i class="fas fa-user-circle mr-3"></i> Your Profile
+              </a>
+              <a 
+                [routerLink]="['/member/settings']"
+                (click)="closeUserMenu()"
+                class="block px-6 py-3 text-lg text-gray-700 hover:bg-gray-100 transition-colors">
+                <i class="fas fa-cog mr-3"></i> Settings
+              </a>
+              <a 
+                (click)="logout()"
+                class="block px-6 py-3 text-lg text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
+                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Page Content -->
+    <main class="flex-1 overflow-y-auto p-10">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

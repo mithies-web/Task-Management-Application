@@ -16,7 +16,7 @@ interface Feature {
   templateUrl: './features.html',
   styleUrls: ['./features.css'],
 })
-export class FeaturesComponent {
+export class Features {
   features: Feature[] = [
     {
       icon: 'fa-lightbulb',

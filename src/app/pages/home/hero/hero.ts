@@ -12,7 +12,7 @@ import { Router, RouterModule } from '@angular/router';
   templateUrl: './hero.html',
   styleUrls: ['./hero.css'],
 })
-export class HeroComponent {
+export class Hero {
   constructor(private router: Router) {}
 
   illustration: string = 'public/assets/homeimage.png';

@@ -16,7 +16,17 @@ import { ContentManagement } from './pages/admin/content-management/content-mana
 import { ReportManagement } from './pages/admin/report-management/report-management';
 import { PerformanceManagement } from './pages/admin/performance-management/performance-management';
 import { Settings } from './pages/admin/settings/settings';
+import { HelpCenter } from './pages/admin/help-center/help-center';
+import { LeadLayout } from './pages/lead/lead-layout/lead-layout';
 import { Dashboard } from './pages/lead/dashboard/dashboard';
+import { Timeline } from './pages/lead/timeline/timeline';
+import { Backlogs } from './pages/lead/backlogs/backlogs';
+import { Boards } from './pages/lead/boards/boards';
+import { MemberLayout } from './pages/member/member-layout/member-layout';
+import { Dashboard as MemberDashboard } from './pages/member/dashboard/dashboard';
+import { Timeline as MemberTimeline } from './pages/member/timeline/timeline';
+import { Backlogs as MemberBacklogs } from './pages/member/backlogs/backlogs';
+import { Boards as MemberBoards } from './pages/member/boards/boards';
 
 
 export const routes: Routes = [
@@ -87,6 +97,11 @@ export const routes: Routes = [
         data: { title: 'Settings' }
       },
       {
+        path: 'help-center',
+        component: HelpCenter,
+        data: { title: 'Help Center' }
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
@@ -95,6 +110,7 @@ export const routes: Routes = [
   },
   {
     path: 'lead',
+    component: LeadLayout,
     canActivate: [AuthGuard, RoleGuard],
     data: { expectedRole: UserRole.LEAD },
     children: [
@@ -104,29 +120,60 @@ export const routes: Routes = [
         data: { title: 'Dashboard' }
       },
       {
+        path: 'timeline',
+        component: Timeline,
+        data: { title: 'Timeline' }
+      },
+      {
+        path: 'backlogs',
+        component: Backlogs,
+        data: { title: 'Backlogs' }
+      },
+      {
+        path: 'boards',
+        component: Boards,
+        data: { title: 'Boards' }
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
       }
     ]
   },
-  // Teammate Routes (commented out but properly structured)
-  // {
-  //   path: 'teammate',
-  //   canActivate: [AuthGuard, RoleGuard],
-  //   data: { expectedRole: UserRole.TEAMMATE },
-  //   children: [
-  //     {
-  //       path: 'dashboard',
-  //       loadComponent: () => import('./pages/teammate/dashboard/dashboard.component').then(m => m.DashboardComponent)
-  //     },
-  //     {
-  //       path: '',
-  //       redirectTo: 'dashboard',
-  //       pathMatch: 'full'
-  //     }
-  //   ]
-  // },
+  {
+    path: 'member',
+    component: MemberLayout,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { expectedRoles: [UserRole.USER] },
+    children: [
+      {
+        path: 'dashboard',
+        component: MemberDashboard,
+        data: { title: 'Dashboard' }
+      },
+      {
+        path: 'timeline',
+        component: MemberTimeline,
+        data: { title: 'Timeline' }
+      },
+      {
+        path: 'backlogs',
+        component: MemberBacklogs,
+        data: { title: 'Backlogs' }
+      },
+      {
+        path: 'boards',
+        component: MemberBoards,
+        data: { title: 'Boards' }
+      },
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      }
+    ]
+  },
   {
     path: '**',
     redirectTo: ''

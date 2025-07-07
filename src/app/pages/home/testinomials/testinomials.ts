@@ -13,11 +13,13 @@ interface Testimonial {
 @Component({
   selector: 'app-testimonials',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule
+  ],
   templateUrl: './testinomials.html',
   styleUrls: ['./testinomials.css'],
 })
-export class TestimonialsComponent {
+export class Testimonials {
   testimonials: Testimonial[] = [
     {
       rating: 5,

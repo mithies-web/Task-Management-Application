@@ -99,20 +99,24 @@ export interface Project {
   tasks?: Task[];
   createdAt?: Date;
   updatedAt?: Date;
+  endDate?: string;
 }
 
 export interface Task {
   id: string;
-  name: string;
+  title: string;
   description?: string;
   assignee: string;
   status: 'todo' | 'in-progress' | 'review' | 'done';
   priority: 'low' | 'medium' | 'high';
-  dueDate: string;
-  completionDate?: string;
+  dueDate: Date;
+  completionDate?: Date;
   estimatedHours?: number;
   actualHours?: number;
   projectId: string;
   createdAt?: Date;
   updatedAt?: Date;
+  tags: string[]; 
+  progress?: number;
+  storyPoints?: number;
 }

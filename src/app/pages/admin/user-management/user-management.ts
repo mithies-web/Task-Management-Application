@@ -1,12 +1,13 @@
-// user-management.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { faUsers, faProjectDiagram, faChartLine, faSearch, faFilter, faPlus, faEye, faEdit, faTrashAlt, faTimes, faPhoneAlt, faInfoCircle, faUserFriends, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Team, TeamHierarchy, User, UserRole } from '../../../model/user.model';
 import { UserService } from '../../../core/services/user/user';
-import { TeamService } from '../../../core/services/team/team';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Chart, registerables } from 'chart.js';
+import { TeamService } from '../../../core/services/team/team';
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-user-management',
@@ -20,6 +21,11 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./user-management.css']
 })
 export class UserManagement implements OnInit {
+  @ViewChild('teamCompletionChart', { static: true }) teamCompletionChartRef!: ElementRef;
+  @ViewChild('taskTimelineChart', { static: true }) taskTimelineChartRef!: ElementRef;
+  private teamCompletionChart?: Chart;
+  private taskTimelineChart?: Chart;
+
   // Icons
   faUsers = faUsers;
   faProjectDiagram = faProjectDiagram;
@@ -85,7 +91,8 @@ export class UserManagement implements OnInit {
     name: '',
     username: '',
     role: UserRole.USER,
-    status: 'active'
+    status: 'active',
+    gender: '',
   };
   selectedTeam: Team | null = null;
 
@@ -107,6 +114,11 @@ export class UserManagement implements OnInit {
     completionRate: 0
   };
 
+  // Form validation
+  userFormErrors: any = {};
+  teamFormErrors: any = {};
+  isSubmitting = false;
+
   constructor(
     private userService: UserService,
     private teamService: TeamService
@@ -118,7 +130,6 @@ export class UserManagement implements OnInit {
     this.loadPerformanceData();
   }
 
-  // Tab switching
   switchTab(tab: 'users' | 'teams' | 'performance'): void {
     this.activeTab = tab;
     if (tab === 'teams') {
@@ -128,7 +139,6 @@ export class UserManagement implements OnInit {
     }
   }
 
-  // Users Tab methods
   loadUsers(): void {
     this.users = this.userService.getUsers();
     this.filteredUsers = [...this.users];
@@ -186,7 +196,6 @@ export class UserManagement implements OnInit {
     return end > this.filteredUsers.length ? this.filteredUsers.length : end;
   }
 
-  // User actions
   viewUserDetails(user: User): void {
     this.selectedUser = { ...user };
     this.showUserDetailsModal = true;
@@ -194,7 +203,48 @@ export class UserManagement implements OnInit {
 
   editUser(user: User): void {
     this.selectedUser = { ...user };
+    this.userFormErrors = {};
     this.showEditUserModal = true;
+  }
+
+  async saveUser(): Promise<void> {
+    this.userFormErrors = {};
+    this.isSubmitting = true;
+
+    if (!this.selectedUser.name) {
+      this.userFormErrors.name = 'Name is required';
+    }
+    if (!this.selectedUser.email) {
+      this.userFormErrors.email = 'Email is required';
+    } else if (!this.validateEmail(this.selectedUser.email)) {
+      this.userFormErrors.email = 'Invalid email format';
+    }
+    if (!this.selectedUser.username) {
+      this.userFormErrors.username = 'Username is required';
+    }
+    if (!this.selectedUser.role) {
+      this.userFormErrors.role = 'Role is required';
+    }
+    if (!this.selectedUser.status) {
+      this.userFormErrors.status = 'Status is required';
+    }
+
+    if (Object.keys(this.userFormErrors).length > 0) {
+      this.isSubmitting = false;
+      return;
+    }
+
+    try {
+      await this.userService.updateUser(this.selectedUser);
+      this.loadUsers();
+      this.closeModals();
+      this.showSuccessToast('User updated successfully!');
+    } catch (error) {
+      this.showErrorToast('Failed to update user. Please try again.');
+      console.error('Error updating user:', error);
+    } finally {
+      this.isSubmitting = false;
+    }
   }
 
   deleteUser(user: User): void {
@@ -205,12 +255,6 @@ export class UserManagement implements OnInit {
     }
   }
 
-  saveUser(): void {
-    this.userService.updateUser(this.selectedUser);
-    this.loadUsers();
-    this.closeModals();
-  }
-
   openAddUserModal(): void {
     this.newUser = {
       role: UserRole.USER,
@@ -218,18 +262,48 @@ export class UserManagement implements OnInit {
       employeeType: 'full-time',
       location: 'remote'
     };
+    this.userFormErrors = {};
     this.showAddUserModal = true;
   }
 
-  createUser(): void {
-    if (this.newUser.name && this.newUser.email && this.newUser.password) {
+  async createUser(): Promise<void> {
+    this.userFormErrors = {};
+    this.isSubmitting = true;
+
+    if (!this.newUser.name) {
+      this.userFormErrors.name = 'Name is required';
+    }
+    if (!this.newUser.email) {
+      this.userFormErrors.email = 'Email is required';
+    } else if (!this.validateEmail(this.newUser.email)) {
+      this.userFormErrors.email = 'Invalid email format';
+    }
+    if (!this.newUser.username) {
+      this.userFormErrors.username = 'Username is required';
+    }
+    if (!this.newUser.password) {
+      this.userFormErrors.password = 'Password is required';
+    }
+    if (!this.newUser.role) {
+      this.userFormErrors.role = 'Role is required';
+    }
+    if (!this.newUser.status) {
+      this.userFormErrors.status = 'Status is required';
+    }
+
+    if (Object.keys(this.userFormErrors).length > 0) {
+      this.isSubmitting = false;
+      return;
+    }
+
+    try {
       const newUser: User = {
         id: (this.users.length + 1).toString(),
-        name: this.newUser.name,
-        email: this.newUser.email,
-        username: this.newUser.username || this.newUser.email.split('@')[0],
-        password: this.newUser.password,
-        role: this.newUser.role || UserRole.USER,
+        name: this.newUser.name!,
+        email: this.newUser.email!,
+        username: this.newUser.username || this.newUser.email!.split('@')[0],
+        password: this.newUser.password!,
+        role: this.newUser.role as UserRole,
         status: this.newUser.status || 'active',
         team: this.newUser.team || null,
         phone: this.newUser.phone,
@@ -245,19 +319,21 @@ export class UserManagement implements OnInit {
         profileImg: this.newUser.profileImg || 'assets/images/default-profile.png'
       };
       
-      this.userService.addUser(newUser);
+      await this.userService.addUser(newUser);
       this.loadUsers();
       this.closeModals();
+      this.showSuccessToast('User created successfully!');
+    } catch (error) {
+      this.showErrorToast('Failed to create user. Please try again.');
+      console.error('Error creating user:', error);
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
-  // Teams Tab methods
   loadTeams(): void {
     this.teams = this.teamService.getTeams();
     this.filteredTeams = [...this.teams];
-    
-    // Debug log to check if teams are loading
-    console.log('Teams loaded:', this.teams);
   }
 
   filterTeams(): void {
@@ -295,6 +371,7 @@ export class UserManagement implements OnInit {
       projects: 0,
       completionRate: 0
     };
+    this.teamFormErrors = {};
     this.showAddTeamModal = true;
   }
 
@@ -304,6 +381,7 @@ export class UserManagement implements OnInit {
       projects: 0,
       completionRate: 0
     };
+    this.teamFormErrors = {};
     this.showAddSubTeamModal = true;
   }
 
@@ -314,15 +392,31 @@ export class UserManagement implements OnInit {
       projects: 0,
       completionRate: 0
     };
+    this.teamFormErrors = {};
     this.showAddSubTeamModal = true;
   }
 
-  createTeam(): void {
-    if (this.newTeam.name && this.newTeam.department) {
+  async createTeam(): Promise<void> {
+    this.teamFormErrors = {};
+    this.isSubmitting = true;
+
+    if (!this.newTeam.name) {
+      this.teamFormErrors.name = 'Team name is required';
+    }
+    if (!this.newTeam.department) {
+      this.teamFormErrors.department = 'Department is required';
+    }
+
+    if (Object.keys(this.teamFormErrors).length > 0) {
+      this.isSubmitting = false;
+      return;
+    }
+
+    try {
       const newTeam: Team = {
         id: (this.teams.length + 1).toString(),
-        name: this.newTeam.name,
-        department: this.newTeam.department,
+        name: this.newTeam.name!,
+        department: this.newTeam.department!,
         lead: this.newTeam.lead,
         members: this.newTeam.members || 0,
         projects: this.newTeam.projects || 0,
@@ -331,17 +425,38 @@ export class UserManagement implements OnInit {
         parentTeam: this.newTeam.parentTeam || null
       };
       
-      this.teamService.addTeam(newTeam);
+      await this.teamService.addTeam(newTeam);
       this.loadTeams();
       this.closeModals();
+      this.showSuccessToast('Team created successfully!');
+    } catch (error) {
+      this.showErrorToast('Failed to create team. Please try again.');
+      console.error('Error creating team:', error);
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
-  createSubTeam(): void {
-    if (this.newSubTeam.name && this.newSubTeam.parentTeam) {
+  async createSubTeam(): Promise<void> {
+    this.teamFormErrors = {};
+    this.isSubmitting = true;
+
+    if (!this.newSubTeam.name) {
+      this.teamFormErrors.name = 'Sub-team name is required';
+    }
+    if (!this.newSubTeam.parentTeam) {
+      this.teamFormErrors.parentTeam = 'Parent team is required';
+    }
+
+    if (Object.keys(this.teamFormErrors).length > 0) {
+      this.isSubmitting = false;
+      return;
+    }
+
+    try {
       const newSubTeam: Team = {
         id: (this.teams.length + 1).toString(),
-        name: this.newSubTeam.name,
+        name: this.newSubTeam.name!,
         department: this.teams.find(t => t.name === this.newSubTeam.parentTeam)?.department || '',
         lead: this.newSubTeam.lead,
         members: this.newSubTeam.members || 0,
@@ -351,9 +466,15 @@ export class UserManagement implements OnInit {
         parentTeam: this.newSubTeam.parentTeam
       };
       
-      this.teamService.addTeam(newSubTeam);
+      await this.teamService.addTeam(newSubTeam);
       this.loadTeams();
       this.closeModals();
+      this.showSuccessToast('Sub-team created successfully!');
+    } catch (error) {
+      this.showErrorToast('Failed to create sub-team. Please try again.');
+      console.error('Error creating sub-team:', error);
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
@@ -362,27 +483,38 @@ export class UserManagement implements OnInit {
     this.showTeamDetailsModal = true;
   }
 
-  // In your component class
   editTeam(team: Team): void {
-    // Create a deep copy of the team to avoid reference issues
     this.selectedTeam = JSON.parse(JSON.stringify(team));
+    this.teamFormErrors = {};
     this.showEditTeamModal = true;
   }
 
   async saveTeamEdits(): Promise<void> {
     if (!this.selectedTeam) return;
 
+    this.teamFormErrors = {};
+    this.isSubmitting = true;
+
+    if (!this.selectedTeam.name) {
+      this.teamFormErrors.name = 'Team name is required';
+    }
+    if (!this.selectedTeam.department) {
+      this.teamFormErrors.department = 'Department is required';
+    }
+
+    if (Object.keys(this.teamFormErrors).length > 0) {
+      this.isSubmitting = false;
+      return;
+    }
+
     try {
-      // Update the team in the service
       await this.teamService.updateTeam(this.selectedTeam);
       
-      // Update the team in the local array
       const index = this.teams.findIndex(t => t.id === this.selectedTeam?.id);
       if (index !== -1) {
         this.teams[index] = {...this.selectedTeam};
       }
       
-      // Update filtered teams if needed
       this.filteredTeams = this.filteredTeams.map(t => 
         t.id === this.selectedTeam?.id ? {...this.selectedTeam} : t
       );
@@ -392,52 +524,33 @@ export class UserManagement implements OnInit {
     } catch (error) {
       this.showErrorToast('Failed to update team. Please try again.');
       console.error('Error updating team:', error);
-    }
-}
-  confirmSaveTeamEdits(): void {
-    if (this.selectedTeam) {
-      const confirmed = confirm(`Are you sure you want to save changes to ${this.selectedTeam.name}?`);
-      if (confirmed) {
-        this.saveTeamEdits();
-      }
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
-  private showSuccessToast(message: string): void {
-    // Implement your toast notification here or use a library
-    alert(message); // Temporary solution - replace with proper toast
+  deleteTeam(team: Team): void {
+    if (confirm(`Are you sure you want to delete the team "${team.name}"?`)) {
+      this.teamService.deleteTeam(team.id);
+      this.loadTeams();
+      this.closeModals();
+    }
   }
 
-  private showErrorToast(message: string): void {
-    // Implement your toast notification here or use a library
-    alert(message); // Temporary solution - replace with proper toast
-  }
-
-
-  /// In your component class
   addMemberToTeam(team: Team): void {
     this.selectedTeam = {...team};
-    
-    // Reset selections
     this.selectedMembers = [];
     this.memberSearchTerm = '';
-    
-    // Initialize available members
     this.filterAvailableMembers();
-    
     this.showAddMemberModal = true;
   }
 
   filterAvailableMembers(): void {
     if (!this.selectedTeam) return;
 
-    // Get current team members' IDs
     const teamMemberIds = this.getTeamMembers(this.selectedTeam.name).map(m => m.id);
-
-    // Filter users not in the team
     let filtered = this.users.filter(user => !teamMemberIds.includes(user.id));
 
-    // Apply search filter if there's a search term
     if (this.memberSearchTerm) {
       const term = this.memberSearchTerm.toLowerCase();
       filtered = filtered.filter(user => 
@@ -446,7 +559,6 @@ export class UserManagement implements OnInit {
       );
     }
 
-    // Map to include selection state
     this.availableMembers = filtered.map(member => ({
       ...member,
       selected: this.selectedMembers.some(m => m.id === member.id)
@@ -468,8 +580,9 @@ export class UserManagement implements OnInit {
   async addSelectedMembers(): Promise<void> {
     if (!this.selectedTeam || this.selectedMembers.length === 0) return;
 
+    this.isAddingMembers = true;
+
     try {
-      // Update team members
       const updatedTeam: Team = {
         ...this.selectedTeam,
         members: this.selectedTeam.members + this.selectedMembers.length,
@@ -479,7 +592,6 @@ export class UserManagement implements OnInit {
         ]
       };
 
-      // Update user team assignments
       for (const member of this.selectedMembers) {
         const user = this.users.find(u => u.id === member.id);
         if (user) {
@@ -488,41 +600,23 @@ export class UserManagement implements OnInit {
         }
       }
 
-      // Update team in service
       await this.teamService.updateTeam(updatedTeam);
       
-      // Update local state
       const teamIndex = this.teams.findIndex(t => t.id === updatedTeam.id);
       if (teamIndex !== -1) {
         this.teams[teamIndex] = updatedTeam;
       }
       
-      this.filteredTeams = this.teams; // Refresh filtered teams
-      this.loadUsers(); // Refresh users
+      this.filteredTeams = this.teams;
+      this.loadUsers();
       
       this.showSuccessToast(`Added ${this.selectedMembers.length} members to team`);
       this.closeModals();
     } catch (error) {
       this.showErrorToast('Failed to add members. Please try again.');
       console.error('Error adding members:', error);
-    }
-  }
-
-  onMemberSelectionChange(member: User): void {
-    if (member.selected) {
-      if (!this.selectedMembers.some(m => m.id === member.id)) {
-        this.selectedMembers.push(member);
-      }
-    } else {
-      this.selectedMembers = this.selectedMembers.filter(m => m.id !== member.id);
-    }
-  }
-
-  // Add this method to handle team deletion
-  deleteTeam(team: any): void {
-    if (confirm(`Are you sure you want to delete the team "${team.name}"?`)) {
-      this.teams = this.teams.filter((t: any) => t !== team);
-      this.closeModals();
+    } finally {
+      this.isAddingMembers = false;
     }
   }
 
@@ -530,16 +624,7 @@ export class UserManagement implements OnInit {
     return this.users.filter(user => user.team === teamName);
   }
 
-  getAvailableMembers(): User[] {
-    if (!this.selectedTeam) return [];
-    
-    return this.users.filter(user => 
-      !this.getTeamMembers(this.selectedTeam!.name).some(member => member.id === user.id)
-    );
-  }
-
   getTeamProjects(teamName: string): any[] {
-    // This should be replaced with actual project data
     return [
       {
         name: 'Project 1',
@@ -561,7 +646,6 @@ export class UserManagement implements OnInit {
   getTeamHierarchy(team: Team): TeamHierarchy[] {
     const hierarchy: TeamHierarchy[] = [];
     
-    // Add parent team
     hierarchy.push({
       id: team.id,
       name: team.name,
@@ -570,7 +654,6 @@ export class UserManagement implements OnInit {
       projects: team.projects
     });
     
-    // Add sub-teams
     const subTeams = this.getSubTeams(team.id);
     subTeams.forEach(subTeam => {
       hierarchy.push({
@@ -589,9 +672,7 @@ export class UserManagement implements OnInit {
     return this.users.find(user => user.name === name);
   }
 
-  // Performance Tab methods
   loadPerformanceData(): void {
-    // Load team leads
     this.teamLeads = this.users.filter(user => user.role === UserRole.LEAD).map(lead => ({
       ...lead,
       completionRate: Math.floor(Math.random() * 50) + 50,
@@ -600,7 +681,6 @@ export class UserManagement implements OnInit {
       }
     }));
     
-    // Load top performers
     this.topPerformers = [...this.users]
       .sort(() => 0.5 - Math.random())
       .slice(0, 5)
@@ -610,7 +690,6 @@ export class UserManagement implements OnInit {
       }));
   }
 
-  // Helper methods
   getStatusClass(status: string): string {
     switch (status) {
       case 'active':
@@ -655,7 +734,6 @@ export class UserManagement implements OnInit {
     return stars;
   }
 
-  // Modal methods
   closeModals(): void {
     this.showUserDetailsModal = false;
     this.showEditUserModal = false;
@@ -663,8 +741,13 @@ export class UserManagement implements OnInit {
     this.showAddTeamModal = false;
     this.showAddSubTeamModal = false;
     this.showTeamDetailsModal = false;
+    this.showEditTeamModal = false;
     this.showAddMemberModal = false;
     this.selectedMembers = [];
+    this.userFormErrors = {};
+    this.teamFormErrors = {};
+    this.isSubmitting = false;
+    this.isAddingMembers = false;
     this.selectedUser = {
       id: '',
       email: '',
@@ -674,5 +757,160 @@ export class UserManagement implements OnInit {
       status: 'active'
     };
     this.selectedTeam = null;
+  }
+
+  private validateEmail(email: string): boolean {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  }
+
+  private showSuccessToast(message: string): void {
+    // Replace with your toast implementation
+    alert(message);
+  }
+
+  private showErrorToast(message: string): void {
+    // Replace with your toast implementation
+    alert(message);
+  }
+
+  private initCharts(): void {
+    this.initTeamCompletionChart();
+    this.initTaskTimelineChart();
+  }
+
+  private initTeamCompletionChart(): void {
+    const ctx = this.teamCompletionChartRef.nativeElement.getContext('2d');
+    
+    if (this.teamCompletionChart) {
+      this.teamCompletionChart.destroy();
+    }
+
+    this.teamCompletionChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: this.teams.slice(0, 5).map(team => team.name),
+        datasets: [{
+          label: 'Completion Rate %',
+          data: this.teams.slice(0, 5).map(team => team.completionRate),
+          backgroundColor: [
+            'rgba(79, 70, 229, 0.7)',
+            'rgba(99, 102, 241, 0.7)',
+            'rgba(129, 140, 248, 0.7)',
+            'rgba(165, 180, 252, 0.7)',
+            'rgba(199, 210, 254, 0.7)'
+          ],
+          borderColor: [
+            'rgba(79, 70, 229, 1)',
+            'rgba(99, 102, 241, 1)',
+            'rgba(129, 140, 248, 1)',
+            'rgba(165, 180, 252, 1)',
+            'rgba(199, 210, 254, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.parsed.y + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  private initTaskTimelineChart(): void {
+    const ctx = this.taskTimelineChartRef.nativeElement.getContext('2d');
+    
+    if (this.taskTimelineChart) {
+      this.taskTimelineChart.destroy();
+    }
+
+    const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'];
+    const completedTasks = [10, 25, 35, 50, 65, 80];
+    const totalTasks = [20, 40, 60, 80, 100, 120];
+
+    this.taskTimelineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: weeks,
+        datasets: [
+          {
+            label: 'Completed Tasks',
+            data: completedTasks,
+            borderColor: 'rgba(79, 70, 229, 1)',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Total Tasks',
+            data: totalTasks,
+            borderColor: 'rgba(156, 163, 175, 1)',
+            backgroundColor: 'rgba(156, 163, 175, 0.1)',
+            borderDash: [5, 5],
+            tension: 0.3,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.teamCompletionChart) {
+      this.teamCompletionChart.destroy();
+    }
+    if (this.taskTimelineChart) {
+      this.taskTimelineChart.destroy();
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.initCharts();
   }
 }

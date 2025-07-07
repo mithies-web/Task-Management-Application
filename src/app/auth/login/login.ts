@@ -96,7 +96,7 @@ export class Login {
       case UserRole.LEAD:
         return '/lead/dashboard';
       case UserRole.USER:
-        return '/user/dashboard';
+        return '/member/dashboard';
       default:
         return '/';
     }
