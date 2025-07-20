@@ -1,250 +1,189 @@
-// backlogs.ts
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule, TitleCasePipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Task, Project } from '../../../model/user.model';
+import { Subscription } from 'rxjs';
+import { Project, Sprint, Task, User } from '../../../model/user.model';
 import { TaskService } from '../../../core/services/task/task';
 import { ProjectService } from '../../../core/services/project/project';
 import { UserService } from '../../../core/services/user/user';
 import { LocalStorageService } from '../../../core/services/local-storage/local-storage';
-
-interface Sprint {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  status: 'planned' | 'active' | 'completed';
-  goal: string;
-  projectId: string;
-}
+import { ModalService } from '../../../core/services/modal/modal';
+import { DialogService } from '../../../core/services/dialog/dialog';
 
 @Component({
   selector: 'app-backlogs',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
+    CommonModule, 
+    FormsModule, 
+    TitleCasePipe
   ],
   templateUrl: './backlogs.html',
   styleUrls: ['./backlogs.css']
 })
-export class Backlogs implements OnInit {
-  projects: Project[] = [];
-  teamMembers: any[] = [];
-  
-  allSprints: Sprint[] = [];
-  filteredSprints: Sprint[] = [];
-  selectedSprintId: string = '';
-
+export class Backlogs implements OnInit, OnDestroy {
+  // Master Data
   allTasks: Task[] = [];
-  currentSprintTasks: Task[] = [];
-  productBacklogTasks: Task[] = [];
-  
-  selectedProjectId: string = 'all';
+  projects: Project[] = [];
+  sprints: Sprint[] = [];
+  teamMembers: User[] = [];
 
-  // Modals
-  addTaskModalOpen = false;
-  editTaskModalOpen = false;
-  viewTaskModalOpen = false;
-  manageSprintsModalOpen = false;
-  
-  // State
+  // Filtered Data
+  filteredTasks: Task[] = [];
+  filteredSprints: Sprint[] = [];
+
+  // Modals & State
+  isViewModalOpen = false;
+  isEditModalOpen = false;
   currentTask: Task | null = null;
-  newTask: Partial<Task> = {};
-  newSprint: Partial<Sprint> = {};
-  editingSprint: Sprint | null = null;
+
+  // Filters
+  filters = {
+    projectId: 'all',
+    sprintId: 'all', // 'all', 'none' (for product backlog), or a sprint ID
+    assigneeId: 'all',
+    status: 'all',
+    query: ''
+  };
   
-  showToast = false;
-  toastMessage = '';
-  isSubmitting = false;
+  private taskSubscription!: Subscription;
 
   constructor(
     private taskService: TaskService,
     private projectService: ProjectService,
     private userService: UserService,
-    private localStorage: LocalStorageService
+    private localStorage: LocalStorageService,
+    private modalService: ModalService,
+    private dialogService: DialogService
   ) {}
 
   ngOnInit(): void {
-    const currentUser = this.userService.getCurrentUser();
-    if (currentUser && currentUser.team) {
-      this.projects = this.projectService.getProjectsByTeam(currentUser.team);
-      this.teamMembers = this.userService.getTeamMembers(currentUser.team);
-      if (this.projects.length > 0) {
-        this.selectedProjectId = this.projects[0].id; // Default to first project
-      }
-    }
-    
-    // In a real app, sprints would be loaded via a service. We simulate with localStorage.
-    if (!this.localStorage.getSprints()) this.addSampleSprintsForDemo();
-    this.allSprints = this.localStorage.getSprints<Sprint[]>() || [];
-
-    this.loadDataForProject();
-  }
-  
-  loadDataForProject(): void {
-    this.taskService.getTasks().subscribe(tasks => {
+    this.loadInitialData();
+    this.taskSubscription = this.taskService.tasksUpdated$.subscribe(() => {
+      this.taskService.getTasks().subscribe(tasks => {
         this.allTasks = tasks;
-        this.filterSprintsAndTasks();
+        this.applyFilters();
+      });
     });
   }
-  
-  filterSprintsAndTasks(): void {
-    // Filter Sprints based on the selected project
-    this.filteredSprints = this.allSprints.filter(s => this.selectedProjectId === 'all' || s.projectId === this.selectedProjectId);
-    
-    // Find the active sprint for the current project or default to the first one
-    const activeSprint = this.filteredSprints.find(s => s.status === 'active');
-    if (activeSprint) {
-      this.selectedSprintId = activeSprint.id;
-    } else if (this.filteredSprints.length > 0) {
-      this.selectedSprintId = this.filteredSprints[0].id;
-    } else {
-      this.selectedSprintId = '';
-    }
 
-    // Filter Tasks based on the selected project and sprint
-    const projectTasks = this.allTasks.filter(t => this.selectedProjectId === 'all' || t.projectId === this.selectedProjectId);
-    
-    this.currentSprintTasks = projectTasks.filter(t => t.sprintId === this.selectedSprintId);
-    this.productBacklogTasks = projectTasks.filter(t => !t.sprintId);
-  }
-
-  onProjectChange(): void {
-    this.filterSprintsAndTasks();
-  }
-
-  onSprintChange(): void {
-    this.filterSprintsAndTasks();
-  }
-
-  // Task Actions
-  promoteToSprint(task: Task): void {
-    if (!this.selectedSprintId) {
-      this.showToastMessage('No active sprint selected to promote to.');
-      return;
-    }
-    task.sprintId = this.selectedSprintId;
-    this.taskService.updateTask(task);
-    this.filterSprintsAndTasks();
-    this.showToastMessage('Task promoted to current sprint.');
-  }
-
-  removeFromSprint(task: Task): void {
-    task.sprintId = undefined; // Move to product backlog
-    this.taskService.updateTask(task);
-    this.filterSprintsAndTasks();
-    this.showToastMessage('Task moved back to Product Backlog.');
-  }
-
-  // Sprint Actions
-  createSprint(form: NgForm): void {
-    if (!form.valid) return;
-    this.isSubmitting = true;
-    
-    const sprint: Sprint = {
-      id: `sprint-${Date.now()}`,
-      name: this.newSprint.name!,
-      startDate: this.newSprint.startDate!,
-      endDate: this.newSprint.endDate!,
-      goal: this.newSprint.goal!,
-      projectId: this.newSprint.projectId!,
-      status: 'planned'
-    };
-    
-    this.allSprints.push(sprint);
-    this.localStorage.saveSprints(this.allSprints);
-    
-    this.showToastMessage('Sprint created successfully.');
-    this.filterSprintsAndTasks();
-    this.closeModals();
-    this.isSubmitting = false;
-  }
-  
-  updateSprint(form: NgForm): void {
-    if (!form.valid || !this.editingSprint) return;
-    this.isSubmitting = true;
-
-    const index = this.allSprints.findIndex(s => s.id === this.editingSprint!.id);
-    if (index > -1) {
-      this.allSprints[index] = this.editingSprint;
-      this.localStorage.saveSprints(this.allSprints);
-      this.showToastMessage('Sprint updated successfully.');
-    }
-    
-    this.filterSprintsAndTasks();
-    this.closeModals();
-    this.isSubmitting = false;
-  }
-  
-  deleteSprint(sprintId: string): void {
-    if (confirm('Are you sure? This will move all tasks in this sprint to the product backlog.')) {
-        this.allTasks.forEach(task => {
-            if (task.sprintId === sprintId) {
-                task.sprintId = undefined;
-                this.taskService.updateTask(task);
-            }
-        });
-        this.allSprints = this.allSprints.filter(s => s.id !== sprintId);
-        this.localStorage.saveSprints(this.allSprints);
-        this.showToastMessage('Sprint deleted.');
-        this.filterSprintsAndTasks();
+  ngOnDestroy(): void {
+    if (this.taskSubscription) {
+      this.taskSubscription.unsubscribe();
     }
   }
 
-  // Modal Management
-  openAddTaskModal(): void {
-    this.newTask = { priority: 'medium', storyPoints: 3, status: 'todo', projectId: this.selectedProjectId === 'all' ? '' : this.selectedProjectId };
-    this.addTaskModalOpen = true;
+  loadInitialData(): void {
+    const currentUser = this.userService.getCurrentUser();
+    if (currentUser?.team) {
+      this.projects = this.projectService.getProjectsByTeam(currentUser.team);
+      this.teamMembers = this.userService.getTeamMembers(currentUser.team);
+      const projectIds = this.projects.map(p => p.id);
+      
+      this.sprints = this.localStorage.getSprints<Sprint[]>()?.filter(s => projectIds.includes(s.projectId)) || [];
+      this.taskService.getTasks().subscribe(tasks => {
+        this.allTasks = tasks.filter(t => projectIds.includes(t.projectId));
+        this.onProjectFilterChange(); // Initial filter application
+      });
+    }
   }
   
-  openEditTaskModal(task: Task): void {
+  onProjectFilterChange(): void {
+      if (this.filters.projectId === 'all') {
+          const projectIds = this.projects.map(p => p.id);
+          this.filteredSprints = this.sprints.filter(s => projectIds.includes(s.projectId));
+      } else {
+          this.filteredSprints = this.sprints.filter(s => s.projectId === this.filters.projectId);
+      }
+      this.filters.sprintId = 'all'; // Reset sprint filter
+      this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let tasksToFilter = [...this.allTasks];
+    const { projectId, sprintId, assigneeId, status, query } = this.filters;
+    const lowerCaseQuery = query.toLowerCase();
+
+    this.filteredTasks = tasksToFilter.filter(task => {
+      const matchesProject = projectId === 'all' || task.projectId === projectId;
+      const matchesAssignee = assigneeId === 'all' || task.assignee === assigneeId;
+      const matchesStatus = status === 'all' || task.status === status;
+      const matchesQuery = !query || task.title.toLowerCase().includes(lowerCaseQuery);
+      
+      let matchesSprint = true;
+      if (sprintId === 'all') {
+        matchesSprint = true; // Show all tasks regardless of sprint
+      } else if (sprintId === 'none') {
+        matchesSprint = !task.sprintId; // Show only tasks in the product backlog
+      } else {
+        matchesSprint = task.sprintId === sprintId; // Show tasks for a specific sprint
+      }
+      
+      return matchesProject && matchesAssignee && matchesStatus && matchesQuery && matchesSprint;
+    });
+  }
+
+  // --- Task Actions ---
+
+  viewTask(task: Task): void {
     this.currentTask = { ...task };
-    this.editTaskModalOpen = true;
-  }
-
-  openViewTaskModal(task: Task): void {
-    this.currentTask = task;
-    this.viewTaskModalOpen = true;
-  }
-
-  openManageSprintsModal(): void {
-    this.newSprint = { projectId: this.selectedProjectId === 'all' ? '' : this.selectedProjectId };
-    this.editingSprint = null;
-    this.manageSprintsModalOpen = true;
+    this.isViewModalOpen = true;
   }
   
-  openEditSprintModal(sprint: Sprint): void {
-    this.editingSprint = { ...sprint };
+  editTask(task: Task): void {
+    this.currentTask = { ...task };
+    this.isEditModalOpen = true;
+    this.isViewModalOpen = false; // Close view modal if open
+  }
+  
+  confirmDelete(taskId: string): void {
+      this.dialogService.open({
+          title: 'Confirm Deletion',
+          message: 'Are you sure you want to delete this task? This action cannot be undone.',
+          confirmButtonText: 'Delete Task',
+          confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+          onConfirm: () => this.deleteTask(taskId)
+      });
+  }
+  
+  deleteTask(taskId: string): void {
+    this.taskService.deleteTask(taskId);
+    this.closeModals();
+  }
+  
+  confirmSaveChanges(form: NgForm): void {
+      if (!form.valid) return;
+      this.dialogService.open({
+          title: 'Confirm Changes',
+          message: 'Are you sure you want to save the changes to this task?',
+          onConfirm: () => this.saveChanges()
+      });
+  }
+
+  saveChanges(): void {
+    if (this.currentTask) {
+        this.taskService.updateTask(this.currentTask);
+        this.closeModals();
+    }
+  }
+
+  // --- Modal Control ---
+  
+  openCreateTaskModal(): void {
+    this.modalService.openCreateTaskModal(this.filters.projectId !== 'all' ? this.filters.projectId : undefined);
   }
 
   closeModals(): void {
-    this.addTaskModalOpen = false;
-    this.editTaskModalOpen = false;
-    this.viewTaskModalOpen = false;
-    this.manageSprintsModalOpen = false;
-    this.currentTask = null;
-    this.editingSprint = null;
-  }
-  
-  // Utility & Helper methods
-  showToastMessage(message: string): void {
-    this.toastMessage = message;
-    this.showToast = true;
-    setTimeout(() => this.showToast = false, 3000);
+      this.isViewModalOpen = false;
+      this.isEditModalOpen = false;
+      this.currentTask = null;
   }
 
+
+  // Utility methods
   getProjectName = (id: string) => this.projects.find(p => p.id === id)?.name || 'N/A';
-  getPriorityColor = (p: string) => ({ high: 'bg-red-100 text-red-800', medium: 'bg-yellow-100 text-yellow-800', low: 'bg-green-100 text-green-800' }[p] || '');
-  getStatusColor = (s: string) => ({ todo: 'bg-gray-100', 'in-progress': 'bg-blue-100', review: 'bg-purple-100', done: 'bg-green-100' }[s] || '');
-  getSprintStatusColor = (s: string) => ({ active: 'bg-green-100 text-green-800', completed: 'bg-blue-100 text-blue-800', planned: 'bg-yellow-100 text-yellow-800'}[s] || '');
-
-  addSampleSprintsForDemo(): void {
-    const sampleSprints: Sprint[] = [
-        { id: 'sprint-1', name: 'July Sprint A', startDate: '2025-07-14', endDate: '2025-07-27', status: 'active', goal: 'Launch homepage and auth features.', projectId: 'proj-1' },
-        { id: 'sprint-2', name: 'August Sprint A', startDate: '2025-07-28', endDate: '2025-08-10', status: 'planned', goal: 'Develop product pages.', projectId: 'proj-1' },
-        { id: 'sprint-3', name: 'App Core Sprint', startDate: '2025-07-21', endDate: '2025-08-04', status: 'active', goal: 'Core feature implementation for mobile.', projectId: 'proj-2' },
-    ];
-    this.localStorage.saveSprints(sampleSprints);
-  }
+  getSprintName = (id: string | undefined) => id ? (this.sprints.find(s => s.id === id)?.name || 'N/A') : 'Backlog';
+  getAssigneeName = (id: string | undefined) => id ? (this.teamMembers.find(m => m.id === id)?.name || 'Unassigned') : 'Unassigned';
+  getPriorityClass = (p: string) => ({ high: 'text-red-600', medium: 'text-yellow-600', low: 'text-green-600' }[p] || 'text-gray-500');
+  getStatusClass = (s: string) => ({ todo: 'bg-gray-200 text-gray-800', 'in-progress': 'bg-blue-200 text-blue-800', review: 'bg-purple-200 text-purple-800', done: 'bg-green-200 text-green-800' }[s] || '');
 }

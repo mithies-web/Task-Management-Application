@@ -108,6 +108,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
+  assigneeId?: string;
   assignee: string;
   status: 'todo' | 'in-progress' | 'review' | 'done';
   priority: 'low' | 'medium' | 'high';
@@ -125,6 +126,7 @@ export interface Task {
   progress?: number;
   storyPoints?: number;
   sprintId?: string;
+  attachments?: { name: string; url: string }[]; // New field for attachments
 }
 
 

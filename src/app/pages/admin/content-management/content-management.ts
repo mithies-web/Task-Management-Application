@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { DialogService } from '../../../core/services/dialog/dialog';
+import { ToastService } from '../../../core/services/toast/toast';
 
 interface ContentData {
   home: {
@@ -117,7 +119,10 @@ export class ContentManagement implements OnInit {
     }
   };
 
-  constructor() { }
+  constructor(
+    private dialogService: DialogService,
+    private toastService: ToastService
+  ) { }
 
   ngOnInit(): void {
   }
@@ -190,7 +195,8 @@ export class ContentManagement implements OnInit {
 
   saveContent() {
     console.log('Content data to save:', this.contentData);
-    alert('Content changes saved successfully!');
+    // Replace alert with toast
+    this.toastService.show('Content changes saved successfully!');
   }
 
   nl2br(text: string): string {

@@ -1,24 +1,15 @@
-// sidebar.ts
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { User, Project } from '../../../model/user.model';
 import { ProjectService } from '../../../core/services/project/project';
 import { UserService } from '../../../core/services/user/user';
-import { LocalStorageService } from '../../../core/services/local-storage/local-storage';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  skills: string[];
-  projects: string[];
-}
+import { ModalService } from '../../../core/services/modal/modal';
 
 @Component({
   selector: 'app-sidebar',
+  standalone: true,
   imports: [
     CommonModule,
     FormsModule
@@ -26,180 +17,71 @@ interface TeamMember {
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.css']
 })
-export class Sidebar {
-  logo: string = 'public/logo/logo-black.png';
-  @Input() activePage: string = 'dashboard';
-  @Input() isMobileSidebarOpen: boolean = false;
+export class Sidebar implements OnInit {
   @Input() currentUser: User | null = null;
   @Input() collapsed: boolean = false;
 
-  activeMenu: string = 'dashboard';
   projects: Project[] = [];
-  teamMembers: TeamMember[] = [];
-  availableMembers: TeamMember[] = [];
   showAllProjects = false;
-  showProjectDetails = false;
-  selectedProject: Project | null = null;
-  showTeamManagement = false;
-  showCreateTask = false;
-  
-  selectedMemberToAdd: string = '';
-  
-  newTask: any = {
-    title: '',
-    description: '',
-    priority: 'medium',
-    dueDate: new Date().toISOString().split('T')[0],
-    assignee: '',
-    projectId: '',
-    storyPoints: 3,
-    status: 'todo',
-    estimatedHours: 8,
-    attachments: ''
-  };
+  activeProjectId: string | null = null;
 
   constructor(
     private router: Router,
     private projectService: ProjectService,
     private userService: UserService,
-    private localStorage: LocalStorageService
-  ) {
-    this.loadProjects();
-    this.loadTeamMembers();
-  }
+    private modalService: ModalService
+  ) {}
 
   ngOnInit(): void {
     this.loadProjects();
-    this.loadTeamMembers();
   }
 
   loadProjects(): void {
-    const allProjects = this.projectService.getProjects();
-    this.projects = allProjects.filter(project => 
-      project.lead === this.currentUser?.name || 
-      project.teamMembers?.includes(this.currentUser?.id || '')
-    );
-  }
-
-  loadTeamMembers(): void {
-    // Get team members from local storage
-    const storedMembers = this.localStorage.get<TeamMember[]>('teamMembers') || [];
-    this.teamMembers = storedMembers;
-    
-    // Get all users and filter out those who are already team members
-    const allUsers = this.userService.getUsers();
-    this.availableMembers = allUsers
-      .filter(user => !this.teamMembers.some(member => member.id === user.id))
-      .map(user => ({
-        id: user.id,
-        name: user.name,
-        role: user.role || 'Team Member',
-        email: user.email,
-        skills: [],
-        projects: []
-      }));
+    if (this.currentUser && this.currentUser.team) {
+      this.projects = this.projectService.getProjectsByTeam(this.currentUser.team);
+    }
   }
 
   navigateTo(route: string): void {
-    this.activeMenu = route;
     this.router.navigate([`/lead/${route}`]);
-    this.resetViews();
+    this.activeProjectId = null;
+  }
+  
+  navigateToProject(projectId: string): void {
+      this.router.navigate(['/lead/dashboard'], { queryParams: { projectId: projectId } });
+      this.activeProjectId = projectId;
   }
 
   isActive(route: string): boolean {
-    return this.router.url.includes(route);
+    // Check if the current URL path starts with the given route
+    return this.router.url.split('?')[0] === `/lead/${route}`;
   }
 
   toggleAllProjects(): void {
     this.showAllProjects = !this.showAllProjects;
-    this.resetViews();
   }
 
-  viewProjectDetails(project: Project): void {
-    this.selectedProject = project;
-    this.showProjectDetails = true;
-    this.showAllProjects = false;
-    this.showTeamManagement = false;
-    this.showCreateTask = false;
+  // --- Modal Triggers ---
+  openCreateTaskModal(): void {
+    this.modalService.openCreateTaskModal();
   }
-
-  toggleTeamManagement(): void {
-    this.showTeamManagement = !this.showTeamManagement;
-    this.showProjectDetails = false;
-    this.showAllProjects = false;
-    this.showCreateTask = false;
-    this.loadTeamMembers(); // Refresh available members
+  
+  openManageTeamModal(): void {
+    this.modalService.openManageTeamModal();
   }
-
-  toggleCreateTask(): void {
-    this.showCreateTask = !this.showCreateTask;
-    this.showProjectDetails = false;
-    this.showAllProjects = false;
-    this.showTeamManagement = false;
-    this.resetNewTaskForm();
+  
+  openProjectDetailsModal(project: Project, event: MouseEvent): void {
+    event.stopPropagation(); // Prevents the navigation link from firing
+    this.modalService.openProjectDetailsModal(project);
   }
-
-  resetNewTaskForm(): void {
-    this.newTask = {
-      title: '',
-      description: '',
-      priority: 'medium',
-      dueDate: new Date().toISOString().split('T')[0],
-      assignee: '',
-      projectId: this.selectedProject?.id || '',
-      storyPoints: 3,
-      status: 'todo',
-      estimatedHours: 8,
-      attachments: ''
-    };
-  }
-
-  resetViews(): void {
-    this.showProjectDetails = false;
-    this.showTeamManagement = false;
-    this.showCreateTask = false;
-    this.selectedProject = null;
-  }
-
+  
   getProjectStatusColor(status: string): string {
-    switch (status) {
-      case 'in-progress': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'not-started': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  }
-
-  createTask(): void {
-    // In a real app, you'd save this to your backend
-    console.log('Task created:', this.newTask);
-    this.showCreateTask = false;
-    this.resetNewTaskForm();
-  }
-
-  addTeamMember(): void {
-    if (!this.selectedMemberToAdd) return;
-    
-    const memberToAdd = this.availableMembers.find(member => member.id === this.selectedMemberToAdd);
-    if (!memberToAdd) return;
-    
-    this.teamMembers.push(memberToAdd);
-    this.localStorage.set('teamMembers', this.teamMembers);
-    this.selectedMemberToAdd = '';
-    this.loadTeamMembers(); // Refresh the list
-    
-    console.log('New team member added:', memberToAdd);
-  }
-
-  removeTeamMember(memberId: string): void {
-    this.teamMembers = this.teamMembers.filter(member => member.id !== memberId);
-    this.localStorage.set('teamMembers', this.teamMembers);
-    this.loadTeamMembers(); // Refresh the list
-    
-    console.log('Team member removed:', memberId);
-  }
-
-  getTeamMember(id: string): TeamMember | undefined {
-    return this.teamMembers.find(member => member.id === id);
+    const colorMap: { [key: string]: string } = {
+        'in-progress': 'bg-blue-500',
+        'completed': 'bg-green-500',
+        'on-hold': 'bg-yellow-500',
+        'planning': 'bg-gray-400'
+    };
+    return colorMap[status] || 'bg-gray-300';
   }
 }

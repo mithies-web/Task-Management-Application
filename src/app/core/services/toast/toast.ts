@@ -1,30 +1,15 @@
-// toast.service.ts
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+export interface Toast { message: string; type: ToastType; }
+
+@Injectable({ providedIn: 'root' })
 export class ToastService {
-  private toastSubject = new Subject<any>();
-  private confirmSubject = new Subject<any>();
+  private toastState = new BehaviorSubject<Toast | null>(null);
+  toastState$ = this.toastState.asObservable();
 
-  toast$ = this.toastSubject.asObservable();
-  confirm$ = this.confirmSubject.asObservable();
-
-  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration: number = 3000): void {
-    this.toastSubject.next({ message, type, duration });
-  }
-
-  showConfirm(title: string, message: string, confirmText: string = 'Confirm', cancelText: string = 'Cancel'): Promise<boolean> {
-    return new Promise(resolve => {
-      this.confirmSubject.next({
-        title,
-        message,
-        confirmText,
-        cancelText,
-        resolve
-      });
-    });
+  show(message: string, type: ToastType = 'success') {
+    this.toastState.next({ message, type });
   }
 }

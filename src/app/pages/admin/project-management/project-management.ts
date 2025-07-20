@@ -9,6 +9,8 @@ import {
   faTrashAlt, faEdit, faEye, faUsers, faProjectDiagram, faTasks
 } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from '../../../core/services/local-storage/local-storage';
+import { DialogService } from '../../../core/services/dialog/dialog';
+import { ToastService } from '../../../core/services/toast/toast';
 
 interface SprintTask {
   id: string;
@@ -103,7 +105,11 @@ export class ProjectManagement implements OnInit {
   selectedProject: any = null;
   selectedSprint: any = null;
 
-  constructor(private localStorage: LocalStorageService) {
+  constructor(
+    private localStorage: LocalStorageService,
+    private dialogService: DialogService,
+    private toastService: ToastService
+  ) {
     // Initialize form groups
     this.projectForm = new FormGroup({
       name: new FormControl('', [Validators.required, Validators.minLength(3)]),
@@ -168,13 +174,6 @@ export class ProjectManagement implements OnInit {
     // Initialize filtered lists
     this.filteredProjects = [...this.projects];
     this.filteredSprints = [...this.sprints];
-
-    this.teamMembers = [
-      { name: 'John Doe', role: 'Project Manager' },
-      { name: 'Jane Smith', role: 'UI/UX Designer' },
-      { name: 'Mike Johnson', role: 'Marketing Specialist' },
-      { name: 'Emily Davis', role: 'Senior Developer' }
-    ];
 
     const storedProjects = this.localStorage.getProjects<any[]>();
     const storedSprints = this.localStorage.getSprints<any[]>();
@@ -637,9 +636,24 @@ export class ProjectManagement implements OnInit {
     this.filteredProjects = [...this.projects];
     this.applyProjectsFilters();
     this.showAddProjectModal = false;
+    this.toastService.show('Project created successfully!');
   }
 
   updateProject(): void {
+    if (this.editProjectForm.invalid) {
+      this.markFormGroupTouched(this.editProjectForm);
+      return;
+    }
+    
+    this.dialogService.open({
+        title: 'Confirm Project Update',
+        message: `Are you sure you want to save changes to "${this.selectedProject.name}"?`,
+        onConfirm: () => this.executeProjectUpdate()
+    });
+  }
+
+
+  executeProjectUpdate(): void {
     if (this.editProjectForm.invalid) {
       this.markFormGroupTouched(this.editProjectForm);
       return;
@@ -689,20 +703,26 @@ export class ProjectManagement implements OnInit {
       this.showEditProjectModal = false;
       this.showProjectDetailsModal = false;
     }
+
+    
   }
 
-  deleteProject(): void {
-    if (confirm(`Are you sure you want to delete project ${this.selectedProject.id}? This action cannot be undone.`)) {
-      const index = this.projects.findIndex(p => p.id === this.selectedProject.id);
-      if (index !== -1) {
-        this.projects.splice(index, 1);
-        this.localStorage.saveProjects(this.projects);
-        this.filteredProjects = [...this.projects];
-        this.applyProjectsFilters();
-      }
-      this.showProjectDetailsModal = false;
-      this.showEditProjectModal = false;
-    }
+  deleteProject(project: any): void {
+      this.dialogService.open({
+          title: 'Confirm Deletion',
+          message: `Are you sure you want to delete project "${project.name}"? This action cannot be undone.`,
+          confirmButtonText: 'Delete Project',
+          confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+          onConfirm: () => this.executeDeleteProject(project)
+      });
+  }
+
+  private executeDeleteProject(project: any): void {
+      this.projects = this.projects.filter(p => p.id !== project.id);
+      this.localStorage.saveProjects(this.projects);
+      this.applyProjectsFilters();
+      this.closeAllModals();
+      this.toastService.show(`Project "${project.name}" deleted successfully.`);
   }
 
   createNewSprint(): void {
@@ -745,6 +765,16 @@ export class ProjectManagement implements OnInit {
   }
 
   updateSprint(): void {
+    if (this.editSprintForm.invalid) { /* ... */ return; }
+    
+    this.dialogService.open({
+        title: 'Confirm Sprint Update',
+        message: `Are you sure you want to save changes to "${this.selectedSprint.name}"?`,
+        onConfirm: () => this.executeSprintUpdate()
+    });
+  }
+
+  executeSprintUpdate(): void {
     if (this.editSprintForm.invalid) {
       this.markFormGroupTouched(this.editSprintForm);
       return;
@@ -780,16 +810,21 @@ export class ProjectManagement implements OnInit {
     }
   }
 
-  deleteSprint(): void {
-    if (confirm(`Are you sure you want to delete sprint ${this.selectedSprint.id}? This action cannot be undone.`)) {
-      const index = this.sprints.findIndex(s => s.id === this.selectedSprint.id);
-      if (index !== -1) {
-        this.sprints.splice(index, 1);
-        this.localStorage.saveSprints(this.sprints);
-        this.filteredSprints = [...this.sprints];
-        this.applySprintsFilters();
-        this.showSprintDetailsModal = false;
-      }
-    }
+  deleteSprint(sprint: any): void {
+      this.dialogService.open({
+          title: 'Confirm Deletion',
+          message: `Are you sure you want to delete sprint "${sprint.name}"?`,
+          confirmButtonText: 'Delete Sprint',
+          confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+          onConfirm: () => this.executeDeleteSprint(sprint)
+      });
+  }
+  
+  private executeDeleteSprint(sprint: any): void {
+      this.sprints = this.sprints.filter(s => s.id !== sprint.id);
+      this.localStorage.saveSprints(this.sprints);
+      this.applySprintsFilters();
+      this.closeAllModals();
+      this.toastService.show(`Sprint "${sprint.name}" deleted successfully.`);
   }
 }

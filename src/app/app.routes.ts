@@ -28,7 +28,6 @@ import { Profile } from './pages/member/profile/profile';
 import { Settings as MemberSettings } from './pages/member/settings/settings';
 import { LeadProfile } from './pages/lead/lead-profile/lead-profile';
 import { LeadSettings } from './pages/lead/lead-settings/lead-settings';
-import { Tasks } from './pages/lead/tasks/tasks';
 import { Calendar } from './pages/member/calendar/calendar';
 import { Reports } from './pages/member/reports/reports';
 
@@ -126,11 +125,6 @@ export const routes: Routes = [
         path: 'dashboard',
         component: Dashboard,
         data: { title: 'Dashboard' }
-      },
-      {
-        path: 'tasks',
-        component: Tasks,
-        data: { title: 'Tasks' }
       },
       {
         path: 'backlogs',

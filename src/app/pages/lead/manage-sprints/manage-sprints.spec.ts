@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ConfirmationDialog } from './confirmation-dialog';
+import { ManageSprints } from './manage-sprints';
 
-describe('ConfirmationDialog', () => {
-  let component: ConfirmationDialog;
-  let fixture: ComponentFixture<ConfirmationDialog>;
+describe('ManageSprints', () => {
+  let component: ManageSprints;
+  let fixture: ComponentFixture<ManageSprints>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ConfirmationDialog]
+      imports: [ManageSprints]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ConfirmationDialog);
+    fixture = TestBed.createComponent(ManageSprints);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

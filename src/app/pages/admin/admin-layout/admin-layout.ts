@@ -4,6 +4,8 @@ import { filter } from 'rxjs/operators';
 import { Auth } from '../../../core/services/auth/auth';
 import { Sidebar } from '../sidebar/sidebar';
 import { CommonModule } from '@angular/common';
+import { ConfirmDialog } from '../../shared/confirm-dialog/confirm-dialog';
+import { Toast } from '../../shared/toast/toast';
 
 @Component({
   selector: 'app-admin-layout',
@@ -11,7 +13,9 @@ import { CommonModule } from '@angular/common';
   imports: [
     CommonModule,
     Sidebar,
-    RouterOutlet
+    RouterOutlet,
+    ConfirmDialog,
+    Toast
   ],
   templateUrl: './admin-layout.html',
   styleUrls: ['./admin-layout.css']

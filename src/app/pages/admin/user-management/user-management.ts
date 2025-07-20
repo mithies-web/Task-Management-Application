@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+import { ToastService } from '../../../core/services/toast/toast';
+import { DialogService } from '../../../core/services/dialog/dialog';
 
 @Component({
   selector: 'app-user-management',
@@ -124,7 +126,9 @@ export class UserManagement implements OnInit {
   messageType: 'success' | 'error' | 'info' = 'success';
 
   constructor(
-    private localStorage: LocalStorageService
+    private localStorage: LocalStorageService,
+    private dialogService: DialogService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -219,15 +223,20 @@ export class UserManagement implements OnInit {
   }
 
   confirmDeleteUser(user: User): void {
-    this.showConfirmDialog = true;
-    this.confirmDialogTitle = 'Confirm Delete';
-    this.confirmDialogMessage = `Are you sure you want to delete ${user.name}?`;
-    this.confirmButtonText = 'Delete';
-    this.confirmButtonClass = 'custom-dialog-btn-danger';
-    this.confirmAction = () => {
-      this.deleteUser(user);
-      this.closeConfirmDialog();
-    };
+    this.dialogService.open({
+      title: 'Confirm Deletion',
+      message: `Are you sure you want to delete ${user.name}? This action cannot be undone.`,
+      confirmButtonText: 'Delete',
+      confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+      onConfirm: () => this.executeDeleteUser(user)
+    });
+  }
+  
+  private executeDeleteUser(user: User): void {
+    this.users = this.users.filter(u => u.id !== user.id);
+    this.localStorage.saveUsers(this.users);
+    this.toastService.show(`User ${user.name} was deleted.`, 'success');
+    this.applyFilters();
   }
 
   deleteUser(user: User): void {
@@ -269,14 +278,22 @@ export class UserManagement implements OnInit {
 
   saveUser(): void {
     if (this.validateUserForm(this.selectedUser)) {
-      this.showConfirmDialog = true;
-      this.confirmDialogTitle = 'Confirm Changes';
-      this.confirmDialogMessage = `Are you sure you want to save changes to ${this.selectedUser.name}?`;
-      this.confirmButtonText = 'Save';
-      this.confirmAction = () => {
-        this.saveUserChanges();
-        this.closeConfirmDialog();
-      };
+      this.dialogService.open({
+        title: 'Confirm Changes',
+        message: `Are you sure you want to save changes to ${this.selectedUser.name}?`,
+        onConfirm: () => this.executeSaveUser()
+      });
+    }
+  }
+
+  private executeSaveUser(): void {
+    const index = this.users.findIndex(u => u.id === this.selectedUser.id);
+    if (index !== -1) {
+      this.users[index] = { ...this.selectedUser };
+      this.localStorage.saveUsers(this.users);
+      this.toastService.show(`User ${this.selectedUser.name} updated successfully.`);
+      this.applyFilters();
+      this.closeModals();
     }
   }
 
@@ -307,18 +324,6 @@ export class UserManagement implements OnInit {
   editTeam(team: Team): void {
       this.selectedTeam = { ...team };
       this.showEditTeamModal = true;
-  }
-
-  confirmDeleteTeam(team: Team): void {
-    this.showConfirmDialog = true;
-    this.confirmDialogTitle = 'Confirm Delete';
-    this.confirmDialogMessage = `Are you sure you want to delete ${team.name}?`;
-    this.confirmButtonText = 'Delete';
-    this.confirmButtonClass = 'custom-dialog-btn-danger';
-    this.confirmAction = () => {
-        this.deleteTeam(team);
-        this.closeConfirmDialog();
-    };
   }
 
   deleteTeam(team: Team): void {
@@ -392,15 +397,41 @@ export class UserManagement implements OnInit {
 
   saveTeamEdits(): void {
     if (this.selectedTeam && this.validateTeamForm(this.selectedTeam)) {
-        this.showConfirmDialog = true;
-        this.confirmDialogTitle = 'Confirm Changes';
-        this.confirmDialogMessage = `Are you sure you want to save changes to ${this.selectedTeam.name}?`;
-        this.confirmButtonText = 'Save';
-        this.confirmAction = () => {
-            this.saveTeamChanges();
-            this.closeConfirmDialog();
-        };
+      this.dialogService.open({
+        title: 'Confirm Changes',
+        message: `Are you sure you want to save changes to ${this.selectedTeam.name}?`,
+        onConfirm: () => this.executeSaveTeam()
+      });
     }
+  }
+  
+  private executeSaveTeam(): void {
+    if (!this.selectedTeam) return;
+    const index = this.teams.findIndex(t => t.id === this.selectedTeam!.id);
+    if (index !== -1) {
+      this.teams[index] = { ...this.selectedTeam };
+      this.localStorage.saveTeams(this.teams);
+      this.toastService.show(`Team ${this.selectedTeam.name} updated successfully.`);
+      this.filterTeams();
+      this.closeModals();
+    }
+  }
+
+  confirmDeleteTeam(team: Team): void {
+    this.dialogService.open({
+      title: 'Confirm Deletion',
+      message: `Are you sure you want to delete the team "${team.name}"?`,
+      confirmButtonText: 'Delete',
+      confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+      onConfirm: () => this.executeDeleteTeam(team)
+    });
+  }
+
+  private executeDeleteTeam(team: Team): void {
+    this.teams = this.teams.filter(t => t.id !== team.id);
+    this.localStorage.saveTeams(this.teams);
+    this.toastService.show(`Team ${team.name} was deleted.`);
+    this.filterTeams();
   }
 
   private saveTeamChanges(): void {

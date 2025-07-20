@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { User } from '../../../model/user.model';
+import { User, Notification } from '../../../model/user.model';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -9,8 +9,15 @@ import { RouterModule } from '@angular/router';
 import { Sidebar } from '../sidebar/sidebar';
 import { LocalStorageService } from '../../../core/services/local-storage/local-storage';
 import { SessionStorage } from '../../../core/services/session-storage/session-storage';
-import { ProjectService } from '../../../core/services/project/project';
-import { Notification } from '../../../model/user.model';
+import { ModalService } from '../../../core/services/modal/modal';
+import { CreateTask } from '../create-task/create-task';
+import { ManageSprints } from '../manage-sprints/manage-sprints';
+import { ManageTeam } from '../manage-team/manage-team';
+import { ProjectDetails } from '../project-details/project-details';
+import { ConfirmDialog } from "../../shared/confirm-dialog/confirm-dialog";
+import { Toast } from "../../shared/toast/toast";
+
+// Import all modal components
 
 @Component({
   selector: 'app-lead-layout',
@@ -18,15 +25,20 @@ import { Notification } from '../../../model/user.model';
   imports: [
     CommonModule,
     RouterModule,
-    Sidebar
-  ],
+    Sidebar,
+    CreateTask,
+    ManageSprints,
+    ManageTeam,
+    ProjectDetails,
+    ConfirmDialog,
+    Toast
+],
   templateUrl: './lead-layout.html',
   styleUrls: ['./lead-layout.css']
 })
 export class LeadLayout implements OnInit, OnDestroy {
   currentUser: User | null = null;
   isSidebarCollapsed = false;
-  isMobileSidebarOpen = false;
   isUserMenuOpen = false;
   showNotifications = false;
   private routerSubscription!: Subscription;
@@ -39,16 +51,15 @@ export class LeadLayout implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private localStorageService: LocalStorageService,
-    private projectService: ProjectService
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
-    this.currentUser = this.userService.getUsers().find(u => u.role === 'team-lead') ?? null;
+    this.currentUser = this.userService.getCurrentUser();
     
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        // Close menus when route changes
+      .subscribe(() => {
         this.isUserMenuOpen = false;
         this.showNotifications = false;
       });
@@ -57,30 +68,14 @@ export class LeadLayout implements OnInit, OnDestroy {
   }
 
   loadNotifications(): void {
-    // In a real app, you would fetch these from a service
     this.notifications = [
-      {
-        id: '1',
-        title: 'New Project Assigned',
-        message: 'You have been assigned to the Website Redesign project',
-        date: new Date(),
-        read: false,
-        type: 'project',
-        projectId: '1'
-      },
-      {
-        id: '2',
-        title: 'Team Member Added',
-        message: 'Mithies P has been added to your team',
-        date: new Date(Date.now() - 3600000),
-        read: false,
-        type: 'team',
-        memberId: '2'
-      }
+       { id: '1', title: 'New Project Assigned', message: 'You have been assigned to the Website Redesign project.', date: new Date(), read: false, type: 'project', projectId: 'proj-1' },
+       { id: '2', title: 'Team Member Added', message: 'Mithies P has been added to your team.', date: new Date(Date.now() - 3600000), read: true, type: 'team', memberId: '2' },
+       { id: '3', title: 'Task Overdue', message: 'Task "Develop Homepage" is overdue.', date: new Date(Date.now() - 86400000), read: false, type: 'task', taskId: 'task-1' }
     ];
     this.updateUnreadCount();
   }
-
+  
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
     this.isUserMenuOpen = false;
@@ -95,14 +90,12 @@ export class LeadLayout implements OnInit, OnDestroy {
     notification.read = true;
     this.updateUnreadCount();
     
-    if (notification.type === 'project') {
-      this.router.navigate(['/lead/dashboard'], { 
-        queryParams: { projectId: notification.projectId } 
-      });
+    if (notification.type === 'project' && notification.projectId) {
+      this.router.navigate(['/lead/dashboard'], { queryParams: { projectId: notification.projectId } });
     } else if (notification.type === 'team') {
-      this.router.navigate(['/lead/dashboard'], { 
-        queryParams: { memberId: notification.memberId } 
-      });
+      this.modalService.openManageTeamModal();
+    } else if (notification.type === 'task') {
+       this.router.navigate(['/lead/dashboard']);
     }
     
     this.showNotifications = false;
@@ -111,7 +104,6 @@ export class LeadLayout implements OnInit, OnDestroy {
   markAllAsRead(): void {
     this.notifications.forEach(n => n.read = true);
     this.updateUnreadCount();
-    this.showNotifications = false;
   }
 
   updateUnreadCount(): void {
@@ -120,10 +112,6 @@ export class LeadLayout implements OnInit, OnDestroy {
 
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
-  }
-
-  toggleMobileSidebar(): void {
-    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
   }
 
   closeUserMenu(): void {

@@ -1,13 +1,14 @@
 // core/services/task/task.ts
 import { Injectable } from '@angular/core';
 import { Task } from '../../../model/user.model';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { LocalStorageService } from '../local-storage/local-storage';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
+  public tasksUpdated$ = new Subject<void>();
   constructor(private localStorage: LocalStorageService) {
     // Demo Setup: Initialize with some sample data if none exists.
     if (!this.localStorage.getTasks()) {

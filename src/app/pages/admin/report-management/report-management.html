@@ -1,24 +1,4 @@
 <div class="flex-1 flex flex-col overflow-hidden">
-  <!-- Toast Dialog -->
-  <div *ngIf="showToast" class="toast-container">
-    <div class="toast-dialog">
-      <h3 class="text-lg font-medium text-gray-900 mb-2">{{ toastTitle }}</h3>
-      <p class="text-gray-600">{{ toastMessage }}</p>
-      <div class="toast-buttons">
-        <button 
-          (click)="toastAction(false)"
-          class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-          Cancel
-        </button>
-        <button 
-          (click)="toastAction(true)"
-          class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-          Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Main Content Area -->
   <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
     <!-- Page Header -->

@@ -1,21 +1,4 @@
 <!-- user-management.html -->
- <!-- Add this at the bottom of user-management.html -->
-<div *ngIf="showMessageDialog" class="toast-container">
-  <div class="toast" [ngClass]="'toast-' + messageType">
-    <div class="toast-icon">
-      <fa-icon *ngIf="messageType === 'success'" [icon]="faCheckCircle"></fa-icon>
-      <fa-icon *ngIf="messageType === 'error'" [icon]="faTimesCircle"></fa-icon>
-      <fa-icon *ngIf="messageType === 'info'" [icon]="faInfoCircle"></fa-icon>
-    </div>
-    <div class="toast-message">
-      <h4 class="toast-title">{{messageDialogTitle}}</h4>
-      <p class="toast-text">{{messageDialogMessage}}</p>
-    </div>
-    <button class="toast-close" (click)="closeMessageDialog()">
-      <fa-icon [icon]="faTimes"></fa-icon>
-    </button>
-  </div>
-</div>
 <!-- Tabs Navigation -->
 <div class="flex justify-center border-b border-gray-200 mb-6">
   <div class="flex">

@@ -1,162 +1,87 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
-  <div *ngIf="showToast" class="fixed top-20 right-5 z-50 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg animate-fade-in-out">
-    <p>{{ toastMessage }}</p>
-  </div>
-
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Backlogs</h1>
-    <p class="mt-1 text-sm text-gray-500">Manage project sprints and the product backlog.</p>
-  </div>
-
-  <div class="bg-white shadow rounded-lg mb-6 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label for="project" class="block text-sm font-medium text-gray-700 mb-1">Project</label>
-        <select id="project" [(ngModel)]="selectedProjectId" (change)="onProjectChange()" class="block w-full border-gray-300 rounded-md shadow-sm">
-          <option value="all">All Projects</option>
-          <option *ngFor="let project of projects" [value]="project.id">{{project.name}}</option>
-        </select>
-      </div>
-      <div>
-        <label for="sprint" class="block text-sm font-medium text-gray-700 mb-1">Sprint</label>
-        <div class="flex space-x-2">
-            <select id="sprint" [(ngModel)]="selectedSprintId" (change)="onSprintChange()" class="block w-full border-gray-300 rounded-md shadow-sm">
-                <option *ngIf="filteredSprints.length === 0" value="" disabled>No sprints for this project</option>
-                <option *ngFor="let sprint of filteredSprints" [value]="sprint.id">
-                {{sprint.name}} ({{sprint.status | titlecase}})
-                </option>
-            </select>
-            <button (click)="openManageSprintsModal()" class="flex-shrink-0 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Manage</button>
-        </div>
-      </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">Sprint Backlog</h3>
-        <p class="mt-1 text-sm text-gray-500">Tasks for the selected sprint.</p>
-      </div>
-      <div class="px-4 py-5 sm:p-6">
-        <ul *ngIf="currentSprintTasks.length > 0; else emptySprint" class="divide-y divide-gray-200">
-          <li *ngFor="let task of currentSprintTasks" class="py-3 flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-gray-800">{{task.title}}</p>
-              <p class="text-xs text-gray-500">{{getProjectName(task.projectId)}}</p>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button (click)="openViewTaskModal(task)" class="text-gray-400 hover:text-blue-600"><i class="fas fa-eye"></i></button>
-                <button (click)="removeFromSprint(task)" class="text-gray-400 hover:text-red-600"><i class="fas fa-arrow-down"></i></button>
-            </div>
-          </li>
-        </ul>
-        <ng-template #emptySprint>
-          <div class="text-center py-10">
-            <p class="text-sm text-gray-500">No tasks in this sprint.</p>
-          </div>
-        </ng-template>
-      </div>
+<div class="max-w-7xl mx-auto py-6">
+  <div class="mb-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Backlogs</h1>
+        <p class="mt-1 text-sm text-gray-500">View, filter, and manage all tasks assigned to your team.</p>
     </div>
+    <button (click)="openCreateTaskModal()" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+        <i class="fas fa-plus"></i> Create Task
+    </button>
+  </div>
 
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-        <div>
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Product Backlog</h3>
-            <p class="mt-1 text-sm text-gray-500">All unassigned tasks.</p>
-        </div>
-        <button (click)="openAddTaskModal()" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">Add Task</button>
-      </div>
-      <div class="px-4 py-5 sm:p-6">
-        <ul *ngIf="productBacklogTasks.length > 0; else emptyBacklog" class="divide-y divide-gray-200">
-           <li *ngFor="let task of productBacklogTasks" class="py-3 flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-gray-800">{{task.title}}</p>
-              <p class="text-xs text-gray-500">{{getProjectName(task.projectId)}}</p>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button (click)="openViewTaskModal(task)" class="text-gray-400 hover:text-blue-600"><i class="fas fa-eye"></i></button>
-                <button (click)="promoteToSprint(task)" class="text-gray-400 hover:text-green-600"><i class="fas fa-arrow-up"></i></button>
-            </div>
-          </li>
-        </ul>
-        <ng-template #emptyBacklog>
-            <div class="text-center py-10">
-                <p class="text-sm text-gray-500">Product backlog is empty.</p>
-            </div>
-        </ng-template>
-      </div>
+  <div class="bg-white shadow rounded-lg mb-6 p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+      <div class="lg:col-span-2"><label class="block text-sm font-medium text-gray-700">Search</label><input type="text" [(ngModel)]="filters.query" (input)="applyFilters()" placeholder="Search task titles..." class="mt-1 w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
+      <div><label class="block text-sm font-medium text-gray-700">Project</label><select [(ngModel)]="filters.projectId" (change)="onProjectFilterChange()" class="mt-1 w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="all">All Projects</option><option *ngFor="let p of projects" [value]="p.id">{{p.name}}</option></select></div>
+      <div><label class="block text-sm font-medium text-gray-700">Sprint / Backlog</label><select [(ngModel)]="filters.sprintId" (change)="applyFilters()" class="mt-1 w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="all">All Sprints</option><option value="none">Product Backlog</option><option *ngFor="let s of filteredSprints" [value]="s.id">{{s.name}}</option></select></div>
+      <div><label class="block text-sm font-medium text-gray-700">Status</label><select [(ngModel)]="filters.status" (change)="applyFilters()" class="mt-1 w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="all">All Statuses</option><option value="todo">To Do</option><option value="in-progress">In Progress</option><option value="review">Review</option><option value="done">Done</option></select></div>
     </div>
   </div>
-  
-  <div *ngIf="viewTaskModalOpen" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-        <h3 class="text-lg font-medium text-gray-900">{{currentTask?.title}}</h3>
-        <div class="mt-4 flex justify-end space-x-2">
-            <button (click)="closeModals()" class="px-4 py-2 bg-gray-200 rounded-md">Close</button>
-            <button (click)="openEditTaskModal(currentTask!)" class="px-4 py-2 bg-blue-600 text-white rounded-md">Edit</button>
-        </div>
-      </div>
-  </div>
-  
-  <div *ngIf="manageSprintsModalOpen" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-      <div class="p-6 border-b">
-        <h3 class="text-lg font-medium text-gray-900">Manage Sprints</h3>
-      </div>
-      <div class="p-6 max-h-[70vh] overflow-y-auto">
-        <div *ngIf="editingSprint">
-          <form #editSprintForm="ngForm" (ngSubmit)="updateSprint(editSprintForm)">
-            <div class="flex justify-end gap-2 mt-4">
-              <button type="button" (click)="editingSprint = null" class="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
-              <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Save</button>
-            </div>
-          </form>
-        </div>
-        <ul *ngIf="!editingSprint" class="divide-y">
-            <li *ngFor="let sprint of filteredSprints" class="py-2 flex justify-between items-center">
-              <div>
-                <p class="font-medium">{{sprint.name}}</p>
-                <p class="text-sm text-gray-500">{{sprint.startDate | date}} - {{sprint.endDate | date}}</p>
-              </div>
-              <div class="flex gap-2">
-                <button (click)="openEditSprintModal(sprint)" class="text-blue-600">Edit</button>
-                <button (click)="deleteSprint(sprint.id)" class="text-red-600">Delete</button>
-              </div>
-            </li>
-        </ul>
-        <div class="mt-4 border-t pt-4" *ngIf="!editingSprint">
-            <h4 class="font-medium text-gray-800">Create New Sprint</h4>
-            <form #createSprintForm="ngForm" (ngSubmit)="createSprint(createSprintForm)" class="grid grid-cols-2 gap-4 mt-2">
-              <div class="col-span-2">
-                <label class="text-sm">Sprint Name *</label>
-                <input type="text" name="name" [(ngModel)]="newSprint.name" required class="w-full border-gray-300 rounded-md">
-              </div>
-              <div>
-                <label class="text-sm">Start Date *</label>
-                <input type="date" name="startDate" [(ngModel)]="newSprint.startDate" required class="w-full border-gray-300 rounded-md">
-              </div>
-              <div>
-                <label class="text-sm">End Date *</label>
-                <input type="date" name="endDate" [(ngModel)]="newSprint.endDate" required class="w-full border-gray-300 rounded-md">
-              </div>
-              <div class="col-span-2">
-                <label class="text-sm">Project *</label>
-                <select name="projectId" [(ngModel)]="newSprint.projectId" required class="w-full border-gray-300 rounded-md">
-                    <option *ngFor="let p of projects" [value]="p.id">{{p.name}}</option>
-                </select>
-              </div>
-              <div class="col-span-2">
-                <label class="text-sm">Goal *</label>
-                <textarea name="goal" [(ngModel)]="newSprint.goal" required rows="2" class="w-full border-gray-300 rounded-md"></textarea>
-              </div>
-              <div class="col-span-2 flex justify-end">
-                  <button type="submit" [disabled]="!createSprintForm.valid" class="px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-400">Create Sprint</button>
-              </div>
-            </form>
-        </div>
-      </div>
-      <div class="p-4 bg-gray-50 flex justify-end">
-        <button (click)="closeModals()" class="px-4 py-2 bg-white border border-gray-300 rounded-md">Close</button>
-      </div>
+
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="table-header">Task</th><th class="table-header">Assignee</th><th class="table-header">Sprint</th><th class="table-header">Due Date</th><th class="table-header">Status & Priority</th><th class="table-header text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let task of filteredTasks" class="hover:bg-gray-50">
+            <td class="px-6 py-4"><p class="text-sm font-medium text-gray-900">{{task.title}}</p><p class="text-xs text-gray-500">{{getProjectName(task.projectId)}}</p></td>
+            <td class="px-6 py-4 text-sm">{{getAssigneeName(task.assigneeId)}}</td>
+            <td class="px-6 py-4 text-sm">{{getSprintName(task.sprintId)}}</td>
+            <td class="px-6 py-4 text-sm">{{task.dueDate | date:'MMM d, y'}}</td>
+            <td class="px-6 py-4"><div class="flex items-center gap-2"><span class="px-2 py-1 text-xs font-semibold rounded-full" [ngClass]="getStatusClass(task.status)">{{task.status | titlecase}}</span><i class="fas fa-circle text-xs" [ngClass]="getPriorityClass(task.priority)" [title]="task.priority | titlecase"></i></div></td>
+            <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end space-x-3 text-gray-500">
+                    <button (click)="viewTask(task)" title="View Details" class="hover:text-blue-600"><i class="fas fa-eye"></i></button>
+                    <button (click)="editTask(task)" title="Edit Task" class="hover:text-green-600"><i class="fas fa-pencil-alt"></i></button>
+                    <button (click)="confirmDelete(task.id)" title="Delete Task" class="hover:text-red-600"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredTasks.length === 0"><td colspan="6" class="text-center py-10 text-gray-500">No tasks match your filters.</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
+</div>
+
+<div *ngIf="isViewModalOpen && currentTask" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-40 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900">{{ currentTask.title }}</h3>
+        <p class="text-sm text-gray-500 mt-1">In Project: {{ getProjectName(currentTask.projectId) }}</p>
+        <div class="mt-4 pt-4 border-t text-sm space-y-3">
+            <p><strong class="font-medium text-gray-600 w-24 inline-block">Description:</strong> {{ currentTask.description || 'No description provided.' }}</p>
+            <p><strong class="font-medium text-gray-600 w-24 inline-block">Assignee:</strong> {{ getAssigneeName(currentTask.assigneeId) }}</p>
+            <p><strong class="font-medium text-gray-600 w-24 inline-block">Due Date:</strong> {{ currentTask.dueDate | date:'fullDate' }}</p>
+            <p><strong class="font-medium text-gray-600 w-24 inline-block">Status:</strong> <span class="font-semibold" [ngClass]="getStatusClass(currentTask.status)">{{ currentTask.status | titlecase }}</span></p>
+        </div>
+        <div class="mt-6 flex justify-end space-x-3">
+            <button (click)="closeModals()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Close</button>
+            <button (click)="confirmDelete(currentTask.id)" class="px-4 py-2 bg-red-600 text-white rounded-md">Delete</button>
+            <button (click)="editTask(currentTask)" class="px-4 py-2 bg-blue-600 text-white rounded-md">Edit</button>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="isEditModalOpen && currentTask" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-40 flex items-center justify-center">
+    <form #editTaskForm="ngForm" (ngSubmit)="confirmSaveChanges(editTaskForm)" class="bg-white rounded-lg shadow-xl w-full max-w-xl">
+        <div class="p-6 border-b">
+            <h3 class="text-lg font-medium">Edit Task</h3>
+        </div>
+        <div class="p-6 grid grid-cols-2 gap-4">
+            <div class="col-span-2"><label class="text-sm">Title *</label><input type="text" name="title" [(ngModel)]="currentTask.title" required class="mt-1 w-full border border-gray-300 rounded-md p-2"></div>
+            <div class="col-span-2"><label class="text-sm">Description</label><textarea name="description" [(ngModel)]="currentTask.description" rows="3" class="mt-1 w-full border border-gray-300 rounded-md p-2"></textarea></div>
+            <div><label class="text-sm">Assignee</label><select name="assigneeId" [(ngModel)]="currentTask.assigneeId" class="mt-1 w-full border border-gray-300 rounded-md p-2"><option value="">Unassigned</option><option *ngFor="let member of teamMembers" [value]="member.id">{{member.name}}</option></select></div>
+            <div><label class="text-sm">Due Date *</label><input type="date" name="dueDate" [ngModel]="currentTask.dueDate | date:'yyyy-MM-dd'" (ngModelChange)="currentTask.dueDate = $event" required class="mt-1 w-full border border-gray-300 rounded-md p-2"></div>
+            <div><label class="text-sm">Status *</label><select name="status" [(ngModel)]="currentTask.status" required class="mt-1 w-full border border-gray-300 rounded-md p-2"><option value="todo">To Do</option><option value="in-progress">In Progress</option><option value="review">Review</option><option value="done">Done</option></select></div>
+            <div><label class="text-sm">Priority</label><select name="priority" [(ngModel)]="currentTask.priority" class="mt-1 w-full border border-gray-300 rounded-md p-2"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+            <button type="button" (click)="closeModals()" class="px-4 py-2 bg-white border border-gray-300 rounded-md">Cancel</button>
+            <button type="submit" [disabled]="!editTaskForm.valid" class="px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-400">Save Changes</button>
+        </div>
+    </form>
 </div>

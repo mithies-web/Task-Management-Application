@@ -3,6 +3,8 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { DialogService } from '../../../core/services/dialog/dialog';
+import { ToastService } from '../../../core/services/toast/toast';
 
 interface Report {
   id: number;
@@ -260,7 +262,9 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    private router: Router
+    private router: Router,
+    private dialogService: DialogService,
+    private toastService: ToastService
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
     if (this.isBrowser) {
@@ -395,10 +399,7 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
     this.updatePagination();
     this.showReportGenerator = false;
     this.viewReport(newReport.id);
-
-    if (this.isBrowser) {
-      alert('Report generated successfully!');
-    }
+    this.toastService.show('Report generated successfully.');
   }
 
   cancelReportGeneration() {
@@ -487,21 +488,23 @@ export class ReportManagement implements OnInit, OnDestroy, AfterViewInit {
   }
 
   deleteReport(reportId: number) {
-    if (this.isBrowser && confirm('Are you sure you want to delete this report?')) {
-      this.reports = this.reports.filter(r => r.id !== reportId);
-      this.filteredReports = this.filteredReports.filter(r => r.id !== reportId);
-      
-      if (this.selectedReport?.id === reportId) {
-        this.selectedReport = null;
-      }
-      
-      this.updatePagination();
-      this.showReportMenu = null;
-      
-      if (this.isBrowser) {
-        alert('Report deleted successfully!');
-      }
-    }
+    const report = this.reports.find(r => r.id === reportId);
+    if (!report) return;
+    
+    this.dialogService.open({
+        title: 'Confirm Deletion',
+        message: `Are you sure you want to delete the report "${report.title}"?`,
+        confirmButtonText: 'Delete',
+        confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+        onConfirm: () => {
+            this.reports = this.reports.filter(r => r.id !== reportId);
+            this.filteredReports = this.filteredReports.filter(r => r.id !== reportId);
+            if (this.selectedReport?.id === reportId) this.selectedReport = null;
+            this.updatePagination();
+            this.showReportMenu = null;
+            this.toastService.show('Report deleted successfully.');
+        }
+    });
   }
 
   printReport() {
