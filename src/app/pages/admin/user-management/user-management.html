@@ -1,4 +1,5 @@
 <!-- user-management.html -->
+
 <!-- Tabs Navigation -->
 <div class="flex justify-center border-b border-gray-200 mb-6">
   <div class="flex">
@@ -82,7 +83,7 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1 required-field">Team</label>
                         <select 
-                        [(ngModel)]="selectedTeam"
+                        [(ngModel)]="selectedTeamForFilter"
                         (change)="applyFilters()"
                         class="block w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                         >
@@ -133,7 +134,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <tr *ngFor="let user of paginatedUsers" class="hover:bg-gray-50">
-                        <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{user.id}}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{getUserDisplayId(user)}}</td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{user.name}}</td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{user.email}}</td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 capitalize">{{user.role.replace('-', ' ')}}</td>
@@ -419,7 +420,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-gray-500">User ID</label>
-                            <p class="text-sm mt-1">{{selectedUser.id}}</p>
+                            <p class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{getUserDisplayId(selectedUser)}}</p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500">Username</label>
@@ -522,7 +523,7 @@
                     <div class="grid lg:grid-cols-3 md:grid-cols-2 gap-3">
                         <div>
                             <label for="editId" class="block text-xs font-medium text-gray-500 required-field">User ID</label>
-                            <input type="text" id="editId" [(ngModel)]="selectedUser.id" name="id" 
+                            <input type="text" id="editId" [value]="getUserDisplayId(selectedUser)" name="id" 
                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm locked-field" readonly>
                         </div>
                         <div>
@@ -556,20 +557,15 @@
                             <select id="editGender" [(ngModel)]="selectedUser.gender" name="gender" 
                                     class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
                                 <option value="prefer-not-to-say">Prefer not to say</option>
                             </select>
                         </div>
                         <div>
                             <label for="editDob" class="block text-xs font-medium text-gray-500">Date of Birth</label>
                             <input type="date" id="editDob" [(ngModel)]="selectedUser.dob" name="dob" 
-                                   class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
-                        </div>
-                        <div>
-                            <label for="editDoj" class="block text-xs font-medium text-gray-500">Date of Joining</label>
-                            <input type="date" id="editDoj" [(ngModel)]="selectedUser.joinDate" name="joinDate" 
                                    class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                         </div>
                         <div>
@@ -590,8 +586,8 @@
                             <label for="editTeam" class="block text-xs font-medium text-gray-500">Team</label>
                             <select id="editTeam" [(ngModel)]="selectedUser.team" name="team" 
                                     class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
-                                <option value="">No Team</option>
-                                <option *ngFor="let team of teams" [value]="team.name">{{team.name}}</option>
+                                <option [ngValue]="null">No Team</option>
+                                <option *ngFor="let team of teams" [ngValue]="team.id">{{team.name}}</option>
                             </select>
                         </div>
                         <div>
@@ -724,9 +720,9 @@
                             <select id="addGender" [(ngModel)]="newUser.gender" name="gender" 
                                     class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
                                 <option value="">Select Gender</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
                                 <option value="prefer-not-to-say">Prefer not to say</option>
                             </select>
                         </div>
@@ -753,8 +749,8 @@
                             <label for="addTeam" class="block text-xs font-medium text-gray-500">Team</label>
                             <select id="addTeam" [(ngModel)]="newUser.team" name="team" 
                                     class="block w-full px-3 py-1 mt-1 border border-gray-300 rounded-lg shadow-sm">
-                                <option value="">No Team</option>
-                                <option *ngFor="let team of teams" [value]="team.name">{{team.name}}</option>
+                                <option [ngValue]="null">No Team</option>
+                                <option *ngFor="let team of teams" [ngValue]="team.id">{{team.name}}</option>
                             </select>
                         </div>
                         <div>
@@ -952,11 +948,11 @@
 </div>
 
 <!-- Team Details Modal -->
-<div *ngIf="showTeamDetailsModal && selectedTeam" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+<div *ngIf="showTeamDetailsModal && selectedTeamForFilter" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Team: {{selectedTeam.name}}</h3>
+                <h3 class="text-lg font-semibold text-gray-800">Team: {{selectedTeamForFilter.name}}</h3>
                 <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
                     <fa-icon [icon]="faTimes"></fa-icon>
                 </button>
@@ -966,32 +962,32 @@
                     <div class="bg-gray-50 p-4 rounded-lg mb-4">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h4 class="text-sm font-medium text-gray-700 mb-1">{{selectedTeam.name}}</h4>
-                                <p class="text-xs text-gray-500">{{selectedTeam.department}} Department</p>
+                                <h4 class="text-sm font-medium text-gray-700 mb-1">{{selectedTeamForFilter.name}}</h4>
+                                <p class="text-xs text-gray-500">{{selectedTeamForFilter.department}} Department</p>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    {{selectedTeam.members}} members
+                                    {{selectedTeamForFilter.members}} members
                                 </span>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    {{selectedTeam.projects}} projects
+                                    {{selectedTeamForFilter.projects}} projects
                                 </span>
                             </div>
                         </div>
                         <div class="mt-3">
                             <div class="flex justify-between text-xs mb-1">
                                 <span>Completion Rate</span>
-                                <span>{{selectedTeam.completionRate}}%</span>
+                                <span>{{selectedTeamForFilter.completionRate}}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-indigo-600 h-1.5 rounded-full" [style.width.%]="selectedTeam.completionRate"></div>
+                                <div class="bg-indigo-600 h-1.5 rounded-full" [style.width.%]="selectedTeamForFilter.completionRate"></div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-4">
                         <h4 class="text-sm font-medium text-gray-700 mb-2">Description</h4>
-                        <p class="text-sm text-gray-600">{{selectedTeam.description || 'No description provided'}}</p>
+                        <p class="text-sm text-gray-600">{{selectedTeamForFilter.description || 'No description provided'}}</p>
                     </div>
                     
                     <div class="mb-4">
@@ -1009,7 +1005,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr *ngFor="let member of getTeamMembers(selectedTeam.name)" class="hover:bg-gray-50">
+                                    <tr *ngFor="let member of getTeamMembers(selectedTeamForFilter.name)" class="hover:bg-gray-50">
                                         <td class="px-4 py-2 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="flex-shrink-0 h-8 w-8">
@@ -1043,7 +1039,7 @@
                     <div>
                         <h4 class="text-sm font-medium text-gray-700 mb-2">Active Projects</h4>
                         <div class="space-y-2">
-                            <div *ngFor="let project of getTeamProjects(selectedTeam.name)" class="bg-white border border-gray-200 rounded-lg p-3">
+                            <div *ngFor="let project of getTeamProjects(selectedTeamForFilter.name)" class="bg-white border border-gray-200 rounded-lg p-3">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <h4 class="text-sm font-medium text-gray-800">{{project.name}}</h4>
@@ -1071,7 +1067,7 @@
                         <h4 class="text-sm font-medium text-gray-700 mb-2">Team Structure</h4>
                         <div class="bg-white border border-gray-200 rounded-lg p-3">
                             <div class="text-sm text-gray-600">
-                                <div *ngFor="let team of getTeamHierarchy(selectedTeam)" class="flex items-start" [style.margin-left.px]="team.level * 16">
+                                <div *ngFor="let team of getTeamHierarchy(selectedTeamForFilter)" class="flex items-start" [style.margin-left.px]="team.level * 16">
                                     <div class="flex-shrink-0 h-4 w-4 mt-1 mr-1 text-gray-400">
                                         <fa-icon [icon]="team.level === 0 ? faUsers : faUserFriends"></fa-icon>
                                     </div>
@@ -1083,26 +1079,26 @@
                             </div>
                         </div>
                     </div>
-                    
+                 
                     <div class="mb-4">
                         <h4 class="text-sm font-medium text-gray-700 mb-2">Team Lead</h4>
                         <div class="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                            <div *ngIf="selectedTeam.lead; else noLead">
-                                <div *ngIf="getUserByName(selectedTeam.lead); else leadNotFound" class="flex items-center space-x-3">
+                            <div *ngIf="selectedTeamForFilter.lead; else noLead">
+                                <div *ngIf="getUserByName(selectedTeamForFilter.lead); else leadNotFound" class="flex items-center space-x-3">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" [src]="getUserByName(selectedTeam.lead)?.profileImg || 'assets/images/default-profile.png'" [alt]="selectedTeam.lead">
+                                        <img class="h-10 w-10 rounded-full" [src]="getUserByName(selectedTeamForFilter.lead)?.profileImg || 'assets/images/default-profile.png'" [alt]="selectedTeamForFilter.lead">
                                     </div>
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900">{{selectedTeam.lead}}</div>
-                                        <div class="text-xs text-gray-500">{{getUserByName(selectedTeam.lead)?.email}}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{selectedTeamForFilter.lead}}</div>
+                                        <div class="text-xs text-gray-500">{{getUserByName(selectedTeamForFilter.lead)?.email}}</div>
                                         <div class="text-xs text-indigo-600 mt-1">
-                                            <fa-icon [icon]="faPhoneAlt" class="mr-1"></fa-icon> {{getUserByName(selectedTeam.lead)?.phone || 'Not provided'}}
+                                            <fa-icon [icon]="faPhoneAlt" class="mr-1"></fa-icon> {{getUserByName(selectedTeamForFilter.lead)?.phone || 'Not provided'}}
                                         </div>
                                     </div>
                                 </div>
                                 <ng-template #leadNotFound>
                                     <div class="text-sm text-gray-600">
-                                        <fa-icon [icon]="faInfoCircle" class="mr-1"></fa-icon> {{selectedTeam.lead}} (user details not found)
+                                        <fa-icon [icon]="faInfoCircle" class="mr-1"></fa-icon> {{selectedTeamForFilter.lead}} (user details not found)
                                     </div>
                                 </ng-template>
                             </div>
@@ -1113,7 +1109,7 @@
                             </ng-template>
                         </div>
                     </div>
-                    
+                   
                     <div>
                         <h4 class="text-sm font-medium text-gray-700 mb-2">Performance Metrics</h4>
                         <div class="bg-white border border-gray-200 rounded-lg p-3">
@@ -1154,10 +1150,10 @@
             </div>
             
             <div class="mt-6 flex justify-end space-x-3">
-                <button (click)="confirmDeleteTeam(selectedTeam)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700">
+                <button (click)="confirmDeleteTeam(selectedTeamForFilter)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700">
                     Delete Team
                 </button>
-                <button (click)="editTeam(selectedTeam)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
+                <button (click)="editTeam(selectedTeamForFilter)" class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
                     Edit Team
                 </button>
             </div>
@@ -1166,11 +1162,11 @@
 </div>
 
 <!-- Edit Team Modal -->
-<div *ngIf="showEditTeamModal && selectedTeam" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+<div *ngIf="showEditTeamModal && selectedTeamForFilter" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Edit Team: {{selectedTeam.name}}</h3>
+                <h3 class="text-lg font-semibold text-gray-800">Edit Team: {{selectedTeamForFilter.name}}</h3>
                 <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
                     <fa-icon [icon]="faTimes"></fa-icon>
                 </button>
@@ -1179,14 +1175,14 @@
                 <div class="space-y-4">
                     <div>
                         <label for="editTeamName" class="block text-xs font-medium text-gray-500 required-field">Team Name</label>
-                        <input type="text" id="editTeamName" [(ngModel)]="selectedTeam.name" name="name" required 
+                        <input type="text" id="editTeamName" [(ngModel)]="selectedTeamForFilter.name" name="name" required 
                                [class.border-red-300]="teamFormErrors.name"
                                class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <span *ngIf="teamFormErrors.name" class="text-xs text-red-500">{{teamFormErrors.name}}</span>
                     </div>
                     <div>
                         <label for="editTeamDepartment" class="block text-xs font-medium text-gray-500 required-field">Department</label>
-                        <select id="editTeamDepartment" [(ngModel)]="selectedTeam.department" name="department" required 
+                        <select id="editTeamDepartment" [(ngModel)]="selectedTeamForFilter.department" name="department" required 
                                 [class.border-red-300]="teamFormErrors.department"
                                 class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="development">Development</option>
@@ -1201,7 +1197,7 @@
                     </div>
                     <div>
                         <label for="editTeamLead" class="block text-xs font-medium text-gray-500">Team Lead</label>
-                        <select id="editTeamLead" [(ngModel)]="selectedTeam.lead" name="lead" 
+                        <select id="editTeamLead" [(ngModel)]="selectedTeamForFilter.lead" name="lead"
                                 class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select Team Lead</option>
                             <option *ngFor="let user of users" [value]="user.name">{{user.name}}</option>
@@ -1209,7 +1205,7 @@
                     </div>
                     <div>
                         <label for="editTeamDescription" class="block text-xs font-medium text-gray-500">Description</label>
-                        <textarea id="editTeamDescription" [(ngModel)]="selectedTeam.description" name="description" rows="3" 
+                        <textarea id="editTeamDescription" [(ngModel)]="selectedTeamForFilter.description" name="description" rows="3" 
                                   class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                     </div>
                     <div class="mt-6 flex justify-end space-x-3">
@@ -1230,11 +1226,11 @@
 </div>
 
 <!-- Add Member Modal -->
-<div *ngIf="showAddMemberModal && selectedTeam" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+<div *ngIf="showAddMemberModal && selectedTeamForFilter" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Add Members to {{selectedTeam.name}}</h3>
+                <h3 class="text-lg font-semibold text-gray-800">Add Members to {{selectedTeamForFilter.name}}</h3>
                 <button (click)="closeModals()" class="text-gray-400 hover:text-gray-600 text-base">
                     <fa-icon [icon]="faTimes"></fa-icon>
                 </button>
@@ -1250,7 +1246,7 @@
                            placeholder="Search members...">
                 </div>
             </div>
-            
+
             <div class="max-h-96 overflow-y-auto mb-4 border border-gray-200 rounded-lg">
                 <div *ngIf="availableMembers.length === 0" class="text-center text-gray-500 py-4">
                     No available members found
@@ -1261,7 +1257,6 @@
                     <input type="checkbox" [id]="'member-'+member.id" 
                            [checked]="member.selected"
                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    
                     <label [for]="'member-'+member.id" class="ml-3 flex items-center flex-1 cursor-pointer">
                         <img [src]="member.profileImg || 'assets/images/default-profile.png'" 
                              class="h-10 w-10 rounded-full mr-3" [alt]="member.name">
@@ -1292,6 +1287,10 @@
                     <button type="button" (click)="closeModals()" 
                             class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
                         Cancel
+                    </button>
+                    <button type="button" (click)="addSelectedMembers()" [disabled]="selectedMembers.length === 0"
+                            class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                        Add Members
                     </button>
                 </div>
             </div>

@@ -1,69 +1,99 @@
 // core/services/task/task.ts
 import { Injectable } from '@angular/core';
 import { Task } from '../../../model/user.model';
-import { Observable, of, Subject } from 'rxjs';
-import { LocalStorageService } from '../local-storage/local-storage';
+import { Observable, of, Subject, throwError } from 'rxjs'; // Added throwError
+import { HttpClient, HttpHeaders } from '@angular/common/http'; // Import HttpClient and HttpHeaders
+import { catchError, tap } from 'rxjs/operators'; // Added tap
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root'
 })
 export class TaskService {
   public tasksUpdated$ = new Subject<void>();
-  constructor(private localStorage: LocalStorageService) {
-    // Demo Setup: Initialize with some sample data if none exists.
-    if (!this.localStorage.getTasks()) {
-      this.addSampleDataForDemo();
-    }
+  private apiUrl = '/api/tasks'; // Your backend API endpoint for tasks
+
+  constructor(private http: HttpClient) { // Inject HttpClient
+    // No longer need to add sample data for demo from local storage
+    // if (!this.localStorage.getTasks()) {
+    //   this.addSampleDataForDemo();
+    // }
   }
 
-  getTasks(): Observable<Task[]> {
-    const tasks = this.localStorage.getTasks<Task[]>() || [];
-    return of(tasks);
-  }
+  private getToken(): string | null {
+    // Get token from AuthService directly
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    return token;
+  }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.getToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    });
+  }
+
+  getTasks(): Observable<Task[]> {
+    // Make HTTP GET request to backend
+    return this.http.get<Task[]>(this.apiUrl, { headers: this.getAuthHeaders() }).pipe(
+      catchError(this.handleError<Task[]>('getTasks', []))
+    );
+  }
 
   getTasksByProject(projectId: string): Observable<Task[]> {
-    const tasks = (this.localStorage.getTasks<Task[]>() || []).filter(task => task.projectId === projectId);
-    return of(tasks);
+    // Assuming backend supports filtering by project ID
+    return this.http.get<Task[]>(`${this.apiUrl}?projectId=${projectId}`, { headers: this.getAuthHeaders() }).pipe(
+      catchError(this.handleError<Task[]>('getTasksByProject', []))
+    );
   }
 
-  getTaskById(id: string): Observable<Task | undefined> {
-    const task = (this.localStorage.getTasks<Task[]>() || []).find(task => task.id === id);
-    return of(task);
+  getTaskById(id: string): Observable<Task> { // Changed return type to Task (not Task | undefined) as backend should return 404
+    // Make HTTP GET request for a single task
+    return this.http.get<Task>(`${this.apiUrl}/${id}`, { headers: this.getAuthHeaders() }).pipe(
+      catchError(this.handleError<Task>('getTaskById'))
+    );
   }
 
-  updateTask(updatedTask: Task): void {
-    let tasks = this.localStorage.getTasks<Task[]>() || [];
-    const index = tasks.findIndex(t => t.id === updatedTask.id);
-    if (index !== -1) {
-      tasks[index] = updatedTask;
-      this.localStorage.saveTasks(tasks);
-    }
-  }
-
-  addTask(newTask: Task): void {
-    let tasks = this.localStorage.getTasks<Task[]>() || [];
-    tasks.push(newTask);
-    this.localStorage.saveTasks(tasks);
+  addTask(newTask: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'assigneeId' | 'attachments' | 'progress' | 'storyPoints' | 'sprintId' | 'completionDate' | 'actualHours' | 'estimatedHours' | 'startTime' | 'endTime' | 'tags' | 'project'>): Observable<Task> { // Adjusted Omit type for clarity based on backend model
+    // Make HTTP POST request to backend
+    return this.http.post<Task>(this.apiUrl, newTask, { headers: this.getAuthHeaders() }).pipe(
+      tap(() => this.tasksUpdated$.next()), // Notify subscribers that tasks have changed
+      catchError(this.handleError<Task>('addTask'))
+    );
   }
 
-  deleteTask(taskId: string): void {
-    let tasks = (this.localStorage.getTasks<Task[]>() || []).filter(t => t.id !== taskId);
-    this.localStorage.saveTasks(tasks);
+  updateTask(updatedTask: Task): Observable<Task> {
+    // Make HTTP PUT request to backend
+    return this.http.put<Task>(`${this.apiUrl}/${updatedTask.id}`, updatedTask, { headers: this.getAuthHeaders() }).pipe(
+      tap(() => this.tasksUpdated$.next()), // Notify subscribers
+      catchError(this.handleError<Task>('updateTask'))
+    );
   }
 
-  private addSampleDataForDemo(): void {
-    const sampleTasks: Task[] = [
-        { id: 'task-1', title: 'Design Homepage Mockups', description: 'Create Figma designs for the new homepage.', dueDate: new Date('2025-07-25'), status: 'in-progress', priority: 'high', assignee: 'Mithies P', projectId: 'proj-1', storyPoints: 5, tags: ['design', 'figma'] },
-        { id: 'task-2', title: 'Develop Login API', description: 'Setup JWT authentication endpoint.', dueDate: new Date('2025-07-28'), status: 'todo', priority: 'high', assignee: 'Abdullah Firdowsi', projectId: 'proj-1', storyPoints: 8, tags: ['backend', 'api'] },
-        { id: 'task-3', title: 'Setup Staging Environment', description: 'Configure the staging server on AWS.', dueDate: new Date('2025-07-22'), status: 'done', priority: 'medium', assignee: 'Mithies P', projectId: 'proj-1', storyPoints: 3, tags: ['devops'] },
-        { id: 'task-4', title: 'User Testing for Onboarding', description: 'Conduct user testing sessions.', dueDate: new Date('2025-08-01'), status: 'review', priority: 'medium', assignee: 'Hema Dharshini', projectId: 'proj-1', storyPoints: 5, tags: ['testing', 'ux'] },
-        { id: 'task-5', title: 'Plan App Store Listing', description: 'Prepare screenshots and description for app stores.', dueDate: new Date('2025-08-10'), status: 'todo', priority: 'medium', assignee: 'Hema Dharshini', projectId: 'proj-2', storyPoints: 3, tags: ['marketing'] },
-    ];
-    this.localStorage.saveTasks(sampleTasks);
+  deleteTask(taskId: string): Observable<{ message: string }> {
+    // Make HTTP DELETE request to backend
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${taskId}`, { headers: this.getAuthHeaders() }).pipe(
+      tap(() => this.tasksUpdated$.next()), // Notify subscribers
+      catchError(this.handleError<{ message: string }>('deleteTask'))
+    );
   }
+
+  // Removed addSampleDataForDemo as data will come from backend
+  // private addSampleDataForDemo(): void { /* ... */ }
 
   getTasksByAssignee(assigneeName: string): Observable<Task[]> {
-    // Replace this mock with a real API call in production
-    return of([]);
+    // This now truly needs a backend call. Assuming backend can filter by assignee name/ID
+    // You might need to adjust your backend's getTasks to support this query parameter
+    return this.http.get<Task[]>(`${this.apiUrl}?assignee=${assigneeName}`, { headers: this.getAuthHeaders() }).pipe(
+        catchError(this.handleError<Task[]>('getTasksByAssignee', []))
+    );
+  }
+
+  private handleError<T>(operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+      console.error(`${operation} failed:`, error);
+      // It's good practice to re-throw the error or transform it for component-level handling
+      return throwError(() => new Error(error.error?.message || `An error occurred during ${operation}`));
+    };
   }
 }

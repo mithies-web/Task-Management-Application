@@ -1,6 +1,8 @@
 // user.model.ts
 export interface User {
+  _id?: string;
   id: string;
+  numericalId?: number;
   email: string;
   role: UserRole;
   name: string;
@@ -45,25 +47,58 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
+  _id: string;
+  numericalId: number;
   user: User;
+  username: string;
+  email: string;
+  role: UserRole;
+  name: string; // Optional if not always returned
   token: string;
+  status: string; // Optional if not always returned
+  profileImg?: string; // Optional if not always returned
+  phone?: string; 
+  gender?: string;
+  dob?: string;
+  department?: string;
+  team?: string | null; // Optional if not always returned
+  employeeType?: string;
+  location?: string;
+  joinDate?: string;
+  lastActive?: string;
+  address?: string;
+  about?: string;
+  notifications?: Notification[];
+  performance?: {
+    taskCompletion: number;
+    onTimeDelivery: number;
+    qualityRating: number;
+    projects: string[];
+  };
+  completionRate?: number;
 }
 
 export interface Team {
+  _id?: string; // Changed from id to _id to match the AuthResponse interface
   id: string;
   name: string;
   department: string;
   lead?: string;
-  members: number;
-  projects: number;
+  members?: number | User[];
+  projects?: number | Project[];
   completionRate: number;
   description?: string;
-  parentTeam?: string | null;
-  subTeams?: string[];
+  parentTeam?: string | Team | null;
+  subTeams?: string[] | Team[];
   createdAt?: Date;
   updatedAt?: Date;
+  memberCount?: number;
   membersList?: string[];
+  projectCount?: number;
   projectList?: string[];
+  memberDetails?: User[];
+  projectDetails?: Project[];
+  leadDetails?: User | null;
   performanceMetrics?: {
     taskCompletion: number;
     onTimeDelivery: number;

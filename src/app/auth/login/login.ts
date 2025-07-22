@@ -1,4 +1,4 @@
-//login.ts
+// login.ts
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { catchError, finalize } from 'rxjs/operators';
 import { Auth } from '../../core/services/auth/auth';
 import { throwError } from 'rxjs';
-import { UserRole } from '../../model/user.model';
+import { UserRole } from '../../model/user.model'; // Assuming UserRole is correctly defined
 
 @Component({
   selector: 'app-login',
@@ -20,6 +20,7 @@ import { UserRole } from '../../model/user.model';
   styleUrls: ['./login.css']
 })
 export class Login {
+  // ... (image, illustration, loginForm, showPassword, demoUsers, features) ...
   image: string = 'public/logo/logo-black.png';
   illustration: string = 'public/logo/full-logo.png';
   loginForm: FormGroup;
@@ -95,15 +96,19 @@ export class Login {
         finalize(() => this.isLoading = false),
         catchError((error) => {
           this.loginError = true;
+          // error.message will contain the string from throwError in auth.ts
+          // You might display this.errorMessage = error.message; for more detail
           return throwError(() => error);
         })
       )
       .subscribe({
         next: (response) => {
-          this.router.navigateByUrl(this.getRedirectUrl(response.user.role));
+          // 'response' is now the flat AuthResponse, which includes 'role' directly
+          // This line now correctly accesses 'response.role'
+          this.router.navigateByUrl(this.getRedirectUrl(response.role)); // <--- Corrected
         },
         error: () => {
-          this.loginError = true;
+          // Error handled in catchError pipe, `loginError` is set.
         }
       });
   }
