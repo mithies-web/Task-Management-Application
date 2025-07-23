@@ -1,0 +1,49 @@
+{
+  "name": "genflow-task-management-server",
+  "version": "1.0.0",
+  "description": "GenFlow Task Management - Node.js Backend API",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "build": "echo 'No build step required for Node.js'",
+    "test": "jest",
+    "lint": "eslint src/**/*.js",
+    "seed": "node src/scripts/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "multer": "^1.4.5-lts.1",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.55.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "mongodb",
+    "mongoose",
+    "jwt",
+    "api",
+    "task-management"
+  ],
+  "author": "GenWorx AI Team",
+  "license": "MIT"
+}
