@@ -1,0 +1,72 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth/auth';
+
+@Component({
+  selector: 'app-user-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  template: `
+    <div class="min-h-screen bg-gray-50">
+      <!-- Header -->
+      <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center py-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-tasks text-indigo-600 text-2xl"></i>
+              </div>
+              <div class="ml-4">
+                <h1 class="text-2xl font-bold text-gray-900">User Dashboard</h1>
+                <p class="text-sm text-gray-500">Welcome back, {{ currentUser()?.name }}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <button
+                (click)="logout()"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+          <div class="text-center">
+            <i class="fas fa-user text-gray-400 text-6xl mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">User Dashboard</h2>
+            <p class="text-gray-600 mb-8">Your personal workspace coming soon!</p>
+            
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6 max-w-md mx-auto">
+              <h3 class="text-lg font-medium text-green-900 mb-2">Coming Soon</h3>
+              <ul class="text-sm text-green-700 space-y-1">
+                <li>• My assigned tasks</li>
+                <li>• Task progress tracking</li>
+                <li>• Time logging</li>
+                <li>• Personal calendar</li>
+                <li>• Notifications</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  `
+})
+export class UserDashboardComponent implements OnInit {
+  currentUser = this.authService.currentUser;
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {}
+
+  logout() {
+    this.authService.logout();
+  }
+}
