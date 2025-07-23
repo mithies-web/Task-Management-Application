@@ -14,6 +14,109 @@ export class Auth {
   private currentUserSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
   public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
 
+  // Demo users for local testing
+  private demoUsers = [
+    {
+      email: 'admin@genworx.ai',
+      password: '@admin123',
+      user: {
+        id: 'admin-001',
+        _id: 'admin-001',
+        numericalId: 1001,
+        name: 'Admin User',
+        username: 'admin',
+        email: 'admin@genworx.ai',
+        role: UserRole.ADMIN,
+        status: 'ACTIVE',
+        phone: '+1234567890',
+        gender: 'Other',
+        dob: '1990-01-01',
+        department: 'Administration',
+        team: null,
+        employeeType: 'Full-time',
+        location: 'HQ',
+        address: '123 Admin St',
+        about: 'System Administrator',
+        profileImg: 'public/assets/profile-placeholder.png',
+        password: '',
+        notifications: [],
+          performance: {
+            taskCompletion: 95,
+            onTimeDelivery: 90,
+            qualityRating: 85,
+            projects: ['Project-X']
+          },
+          completionRate: 98
+      }
+    },
+    {
+      email: 'mithiesoff@gmail.com',
+      password: '@Mithies2315',
+      user: {
+        id: 'lead-001',
+        _id: 'lead-001',
+        numericalId: 2001,
+        name: 'Team Lead',
+        username: 'teamlead',
+        email: 'mithiesoff@gmail.com',
+        role: UserRole.LEAD,
+        status: 'ACTIVE',
+        phone: '+1234567891',
+        gender: 'Male',
+        dob: '1988-05-15',
+        department: 'Development',
+        team: 'team-001',
+        employeeType: 'Full-time',
+        location: 'Office',
+        address: '456 Lead Ave',
+        about: 'Development Team Lead',
+        profileImg: 'public/assets/profile-placeholder.png',
+        password: '',
+        notifications: [],
+          performance: {
+            taskCompletion: 92,
+            onTimeDelivery: 88,
+            qualityRating: 80,
+            projects: ['Project-Y']
+          },
+          completionRate: 94
+      }
+    },
+    {
+      email: 'mithiesofficial@gmail.com',
+      password: '@Mithies2317',
+      user: {
+        id: 'user-001',
+        _id: 'user-001',
+        numericalId: 3001,
+        name: 'Team Member',
+        username: 'member',
+        email: 'mithiesofficial@gmail.com',
+        role: UserRole.USER,
+        status: 'ACTIVE',
+        phone: '+1234567892',
+        gender: 'Female',
+        dob: '1992-08-20',
+        department: 'Development',
+        team: 'team-001',
+        employeeType: 'Full-time',
+        location: 'Remote',
+        address: '789 Member Blvd',
+        about: 'Software Developer',
+        profileImg: 'public/assets/profile-placeholder.png',
+        password: '',
+        notifications: [],
+          performance: {
+            taskCompletion: 88,
+            onTimeDelivery: 85,
+            qualityRating: 78,
+            projects: ['Project-Z']
+          },
+          completionRate: 90
+      }
+    }
+  ];
+
   constructor(
     private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: Object
@@ -204,62 +307,72 @@ export class Auth {
     );
   }
 
-  // Logs in a user and stores their data and token
+  // Logs in a user and stores their data and token (Local Storage Version)
   login(credentials: { email: string; password: string }, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/users/login`, credentials).pipe(
-      tap(response => {
-        // Store token
-        const token = response.token;
-        if (this.isBrowser()) {
-          if (rememberMe) {
-            localStorage.setItem('authToken', token);
-          } else {
-            sessionStorage.setItem('authToken', token);
+    return new Observable<AuthResponse>((observer) => {
+      // Simulate async operation with setTimeout
+      setTimeout(() => {
+        console.log('Attempting login with credentials:', credentials);
+        console.log('Available demo users:', this.demoUsers.map(u => ({ email: u.email, password: u.password })));
+        
+        const matchingUser = this.demoUsers.find(user => {
+          console.log(`Comparing: ${user.email} === ${credentials.email} && ${user.password} === ${credentials.password}`);
+          return user.email === credentials.email && user.password === credentials.password;
+        });
+
+        if (matchingUser) {
+          const loggedInUser: User = { ...matchingUser.user };
+          const token = `mock-token-${Date.now()}`;
+
+          // Store token
+          if (this.isBrowser()) {
+            if (rememberMe) {
+              localStorage.setItem('authToken', token);
+              localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+            } else {
+              sessionStorage.setItem('authToken', token);
+              sessionStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+            }
           }
+
+          this.currentUserSubject.next(loggedInUser);
+          
+          // Create AuthResponse object
+          const authResponse: AuthResponse = {
+            token,
+            _id: loggedInUser._id!,
+            numericalId: loggedInUser.numericalId!,
+            name: loggedInUser.name,
+            username: loggedInUser.username!,
+            email: loggedInUser.email,
+            role: loggedInUser.role,
+            status: loggedInUser.status,
+            user: loggedInUser,
+            phone: loggedInUser.phone,
+            gender: loggedInUser.gender,
+            dob: loggedInUser.dob,
+            department: loggedInUser.department,
+            team: loggedInUser.team,
+            employeeType: loggedInUser.employeeType,
+            location: loggedInUser.location,
+            address: loggedInUser.address,
+            about: loggedInUser.about,
+            profileImg: loggedInUser.profileImg,
+            notifications: loggedInUser.notifications,
+            performance: loggedInUser.performance,
+            completionRate: loggedInUser.completionRate
+          };
+
+          observer.next(authResponse);
+          observer.complete();
+        } else {
+          observer.error(new Error('Invalid credentials.'));
         }
-
-        // Map the AuthResponse to your comprehensive User interface for storing currentUser
-        const loggedInUser: User = {
-          id: response._id, // Map _id to id
-          _id: response._id, // Keep _id as well
-          numericalId: response.numericalId,
-          name: response.name,
-          username: response.username,
-          email: response.email,
-          role: response.role as UserRole,
-          status: response.status,
-          profileImg: response.profileImg,
-          password: '', // Password is not returned in login response
-          phone: response.phone,
-          gender: response.gender,
-          dob: response.dob,
-          department: response.department,
-          team: response.team, // Assumed to be string ID or null
-          employeeType: response.employeeType,
-          location: response.location,
-          joinDate: response.joinDate,
-          lastActive: response.lastActive,
-          address: response.address,
-          about: response.about,
-          notifications: response.notifications,
-          performance: response.performance,
-          completionRate: response.completionRate,
-        };
-
-        // Store the mapped User object
-        if (this.isBrowser()) {
-          if (rememberMe) {
-            localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-          } else {
-            sessionStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-          }
-        }
-
-        this.currentUserSubject.next(loggedInUser); // Update the BehaviorSubject
-      }),
+      }, 1000); // Simulate network delay
+    }).pipe(
       catchError(error => {
         console.error('Login failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Invalid credentials.'));
+        return throwError(() => new Error(error.message || 'Invalid credentials.'));
       })
     );
   }
