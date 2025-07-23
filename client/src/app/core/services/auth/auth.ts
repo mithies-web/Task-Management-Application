@@ -1,335 +1,635 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
-import { map, tap, catchError, finalize } from 'rxjs/operators';
-import { AuthResponse, Team, User, UserRole } from '../../../model/user.model';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class Auth {
-  private apiUrl = 'http://localhost:5000/api';
-
-  private currentUserSubject: BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
-  public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
-
-  constructor(
-    private http: HttpClient,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) {
-    this.loadCurrentUserFromStorage();
-  }
-
-  // Helper to check if we're in browser environment
-  private isBrowser(): boolean {
-    return isPlatformBrowser(this.platformId);
-  }
-
-  // Helper to get authentication token from storage
-  private getToken(): string | null {
-    if (!this.isBrowser()) return null;
-    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-  }
-
-  // Helper to create authenticated HTTP headers
-  private getAuthHeaders(): HttpHeaders {
-    const token = this.getToken(); // Retrieve token
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '' // Attach as Bearer token
-    });
-  }
-
-  // Loads current user data from storage on service initialization
-  private loadCurrentUserFromStorage(): void {
-    if (!this.isBrowser()) return;
-    
-    const storedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        const user: User = JSON.parse(storedUser);
-        this.currentUserSubject.next(user);
-      } catch (e) {
-        console.error('Failed to parse stored user data:', e);
-        this.logout(); // Clear corrupted data
-      }
-    }
-  }
-
-  // Admin: Get all users from the backend
-  adminGetAllUsers(): Observable<User[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getAuthHeaders() }).pipe(
-      map(users => users.map(user => this.mapApiUserToUser(user))),
-      catchError(error => {
-        console.error('AdminGetAllUsers failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to fetch users.'));
-      })
-    );
-  }
-
-  // Admin: Create a new user via backend API
-  adminCreateUser(userData: Partial<User>): Observable<User> {
-    // Ensure `_id` is not sent, as MongoDB will generate it.
-    // The backend's pre-save hook will generate numericalId.
-    const payload = { ...userData };
-    delete payload.id; // Remove frontend 'id' as backend uses '_id'
-    delete payload._id; // Ensure _id is not sent
-
-    return this.http.post<any>(`${this.apiUrl}/admin/users`, payload, { headers: this.getAuthHeaders() }).pipe(
-      map(apiUser => this.mapApiUserToUser(apiUser)), // Map the backend response to frontend User model
-      catchError(error => {
-        console.error('AdminCreateUser failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to create user.'));
-      })
-    );
-  }
-
-  // Admin: Update an existing user via backend API
-  adminUpdateUser(id: string, userData: Partial<User>): Observable<User> {
-    // Only send updatable fields.
-    const payload = { ...userData };
-    delete payload.id; // Remove frontend 'id' from payload
-    delete payload.numericalId; // numericalId shouldn't be updated via this route
-
-    return this.http.put<any>(`${this.apiUrl}/admin/users/${id}`, payload, { headers: this.getAuthHeaders() }).pipe(
-      map(apiUser => this.mapApiUserToUser(apiUser)), // Map the backend response to frontend User model
-      catchError(error => {
-        console.error('AdminUpdateUser failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to update user.'));
-      })
-    );
-  }
-
-  // Admin: Delete a user via backend API
-  adminDeleteUser(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/admin/users/${id}`, { headers: this.getAuthHeaders() }).pipe(
-      catchError(error => {
-        console.error('AdminDeleteUser failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to delete user.'));
-      })
-    );
-  }
-
-  // Maps backend API user response to the frontend User interface
-  private mapApiUserToUser(apiUser: any): User {
-    return {
-      id: apiUser._id, // Map MongoDB's _id to frontend's id
-      _id: apiUser._id, // Also keep _id for consistency if needed, though 'id' is primary for frontend
-      numericalId: apiUser.numericalId,
-      name: apiUser.name,
-      username: apiUser.username,
-      email: apiUser.email,
-      role: apiUser.role,
-      status: apiUser.status,
-      phone: apiUser.phone,
-      gender: apiUser.gender,
-      dob: apiUser.dob,
-      department: apiUser.department,
-      // Ensure 'team' is always a string ID or null, regardless of how backend sends it (populated or just ID)
-      team: (apiUser.team && typeof apiUser.team === 'object' && apiUser.team._id)
-              ? apiUser.team._id.toString()
-              : (apiUser.team ? apiUser.team.toString() : null),
-      employeeType: apiUser.employeeType,
-      location: apiUser.location,
-      address: apiUser.address,
-      about: apiUser.about,
-      profileImg: apiUser.profileImg,
-      password: '', // Never store or expect password in frontend User object from API responses
-      notifications: apiUser.notifications,
-      performance: apiUser.performance,
-      completionRate: apiUser.completionRate,
-    };
-  }
-
-  // Get current user from BehaviorSubject
-  getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
-  }
-
-  // Logs out user by clearing stored token and user data
-  logout(): void {
-    if (this.isBrowser()) {
-      localStorage.removeItem('authToken');
-      sessionStorage.removeItem('authToken');
-      localStorage.removeItem('currentUser');
-      sessionStorage.removeItem('currentUser');
-    }
-    this.currentUserSubject.next(null);
-  }
-
-  // Checks if the current user has a specific role
-  hasRole(role: string): boolean {
-    const user = this.getCurrentUser();
-    return user ? user.role === role : false;
-  }
-
-  // Checks if the user is authenticated (token and user object present)
-  isAuthenticated(): boolean {
-    return !!this.getToken() && !!this.currentUserSubject.value;
-  }
-
-  // Checks if the current user has any of the specified roles
-  hasAnyRole(roles: string[]): boolean {
-    const user = this.getCurrentUser();
-    return user ? roles.includes(user.role) : false;
-  }
-
-  // Registers a new user
-  registerUser(user: User): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/users/register`, user).pipe(
-      tap(response => {
-        // Map the AuthResponse to a User object for storage (optional, usually navigate to login)
-        const registeredUser: User = {
-          id: response._id,
-          _id: response._id, // Keep _id from backend
-          numericalId: response.numericalId,
-          name: response.name,
-          username: response.username,
-          email: response.email,
-          role: response.role,
-          status: response.status,
-          profileImg: response.profileImg,
-          password: '', // Password not stored here
-          team: response.team // Assuming team is sent as ID string in AuthResponse
-        };
-        // You might choose not to store the user after registration and instead navigate to login page.
-        // If you do, ensure it doesn't auto-login unless intended.
-        // Example: this.storeUserData(response, false);
-      }),
-      catchError(error => {
-        console.error('RegisterUser failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Registration failed.'));
-      })
-    );
-  }
-
-  // Logs in a user and stores their data and token
-  login(credentials: { email: string; password: string }, rememberMe: boolean): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/users/login`, credentials).pipe(
-      tap(response => {
-        // Store token
-        const token = response.token;
-        if (this.isBrowser()) {
-          if (rememberMe) {
-            localStorage.setItem('authToken', token);
-          } else {
-            sessionStorage.setItem('authToken', token);
-          }
-        }
-
-        // Map the AuthResponse to your comprehensive User interface for storing currentUser
-        const loggedInUser: User = {
-          id: response._id, // Map _id to id
-          _id: response._id, // Keep _id as well
-          numericalId: response.numericalId,
-          name: response.name,
-          username: response.username,
-          email: response.email,
-          role: response.role as UserRole,
-          status: response.status,
-          profileImg: response.profileImg,
-          password: '', // Password is not returned in login response
-          phone: response.phone,
-          gender: response.gender,
-          dob: response.dob,
-          department: response.department,
-          team: response.team, // Assumed to be string ID or null
-          employeeType: response.employeeType,
-          location: response.location,
-          joinDate: response.joinDate,
-          lastActive: response.lastActive,
-          address: response.address,
-          about: response.about,
-          notifications: response.notifications,
-          performance: response.performance,
-          completionRate: response.completionRate,
-        };
-
-        // Store the mapped User object
-        if (this.isBrowser()) {
-          if (rememberMe) {
-            localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-          } else {
-            sessionStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-          }
-        }
-
-        this.currentUserSubject.next(loggedInUser); // Update the BehaviorSubject
-      }),
-      catchError(error => {
-        console.error('Login failed:', error);
-        return throwError(() => new Error(error.error?.message || 'Invalid credentials.'));
-      })
-    );
-  }
-
-  // Team methods should use '/admin/teams' as the base path
-  adminGetAllTeams(): Observable<Team[]> {
-    return this.http.get<Team[]>(`${this.apiUrl}/admin/teams`, { 
-      headers: this.getAuthHeaders() 
-    }).pipe(
-      catchError(error => {
-        console.error('Failed to fetch teams:', error);
-        return throwError(() => new Error('Failed to fetch teams'));
-      })
-    );
-  }
-
-  adminGetTeamById(id: string): Observable<Team> {
-    return this.http.get<Team>(`${this.apiUrl}/admin/teams/${id}`, { headers: this.getAuthHeaders() });
-  }
-
-  adminCreateTeam(teamData: Partial<Team>): Observable<Team> {
-    return this.http.post<Team>(`${this.apiUrl}/admin/teams`, teamData, { 
-      headers: this.getAuthHeaders() 
-    }).pipe(
-      catchError(error => {
-        console.error('Failed to create team:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to create team'));
-      })
-    );
-  }
-
-  adminUpdateTeam(id: string, teamData: Partial<Team>): Observable<Team> {
-    return this.http.put<Team>(`${this.apiUrl}/admin/teams/${id}`, teamData, { headers: this.getAuthHeaders() }).pipe(
-      map(team => this.mapApiTeamToTeam(team))
-    );
-  }
-
-  adminDeleteTeam(id: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.apiUrl}/admin/teams/${id}`, { headers: this.getAuthHeaders() });
-  }
-
-  adminAddTeamMembers(teamId: string, memberIds: string[]): Observable<Team> {
-    return this.http.put<Team>(`${this.apiUrl}/admin/teams/${teamId}/add-members`, { memberIds }, { headers: this.getAuthHeaders() }).pipe(
-      map(team => this.mapApiTeamToTeam(team))
-    );
-  }
-
-  adminRemoveTeamMembers(teamId: string, memberIds: string[]): Observable<Team> {
-    return this.http.put<Team>(`${this.apiUrl}/admin/teams/${teamId}/remove-members`, { memberIds }, { headers: this.getAuthHeaders() }).pipe(
-      map(team => this.mapApiTeamToTeam(team))
-    );
-  }
-
-  private mapApiTeamToTeam(apiTeam: any): Team {
-    return {
-      id: apiTeam._id || apiTeam.id,
-      name: apiTeam.name,
-      department: apiTeam.department,
-      lead: apiTeam.lead?._id || apiTeam.lead,
-      members: apiTeam.membersCount || (apiTeam.members ? apiTeam.members.length : 0),
-      projects: apiTeam.projectsCount || (apiTeam.projects ? apiTeam.projects.length : 0),
-      completionRate: apiTeam.completionRate || 0,
-      description: apiTeam.description,
-      parentTeam: apiTeam.parentTeam?._id || apiTeam.parentTeam,
-      subTeams: apiTeam.subTeams?.map((sub: any) => sub._id || sub) || [],
-      leadDetails: apiTeam.lead,
-      memberDetails: apiTeam.members,
-      projectDetails: apiTeam.projects,
-      createdAt: apiTeam.createdAt,
-      updatedAt: apiTeam.updatedAt
-    };
-  }
-}
+@@ .. @@
+ import { Injectable, signal } from '@angular/core';
++import { HttpClient, HttpHeaders } from '@angular/common/http';
+ import { Router } from '@angular/router';
++import { Observable, BehaviorSubject, throwError } from 'rxjs';
++import { map, catchError, tap } from 'rxjs/operators';
++import { environment } from '../../../../environments/environment';
+ import { User } from '../../../model/user.model';
+-import { LocalStorageService } from '../local-storage/local-storage';
+-import { SessionStorageService } from '../session-storage/session-storage';
+-import { DemoDataService } from '../demo-data/demo-data';
++
++interface LoginRequest {
++  email: string;
++  password: string;
++}
++
++interface RegisterRequest {
++  name: string;
++  username: string;
++  email: string;
++  password: string;
++  role?: string;
++}
++
++interface AuthResponse {
++  success: boolean;
++  message: string;
++  token?: string;
++  user?: User;
++  _id?: string;
++  numericalId?: number;
++  name?: string;
++  username?: string;
++  email?: string;
++  role?: string;
++  status?: string;
++  phone?: string;
++  gender?: string;
++  dob?: string;
++  department?: string;
++  team?: string;
++  employeeType?: string;
++  location?: string;
++  joinDate?: string;
++  lastActive?: string;
++  address?: string;
++  about?: string;
++  profileImg?: string;
++  notifications?: any[];
++  performance?: any;
++  completionRate?: number;
++}
+ 
+ @Injectable({
+   providedIn: 'root'
+ })
+ export class AuthService {
++  private apiUrl = environment.apiUrl;
++  private tokenKey = 'genflow_auth_token';
++  private userKey = 'genflow_current_user';
++  
++  private currentUserSubject = new BehaviorSubject<User | null>(null);
++  public currentUser$ = this.currentUserSubject.asObservable();
++  
+   // Signals for reactive state management
+   currentUser = signal<User | null>(null);
+   isAuthenticated = signal<boolean>(false);
+   userRole = signal<string>('');
+ 
+   constructor(
++    private http: HttpClient,
+     private router: Router,
+-    private localStorageService: LocalStorageService,
+-    private sessionStorageService: SessionStorageService,
+-    private demoDataService: DemoDataService
+   ) {
+-    this.loadUserFromStorage();
++    this.initializeAuth();
+   }
+ 
+-  private loadUserFromStorage(): void {
+-    const storedUser = this.localStorageService.getItem('currentUser');
+-    if (storedUser) {
+-      this.setCurrentUser(storedUser);
++  private initializeAuth(): void {
++    const token = this.getToken();
++    const storedUser = this.getStoredUser();
++    
++    if (token && storedUser) {
++      this.setCurrentUser(storedUser);
++      // Optionally verify token with backend
++      this.verifyToken().subscribe({
++        next: (user) => {
++          this.setCurrentUser(user);
++        },
++        error: () => {
++          this.logout();
++        }
++      });
+     }
+   }
+ 
++  private getToken(): string | null {
++    return localStorage.getItem(this.tokenKey);
++  }
++
++  private setToken(token: string): void {
++    localStorage.setItem(this.tokenKey, token);
++  }
++
++  private removeToken(): void {
++    localStorage.removeItem(this.tokenKey);
++  }
++
++  private getStoredUser(): User | null {
++    const userStr = localStorage.getItem(this.userKey);
++    return userStr ? JSON.parse(userStr) : null;
++  }
++
++  private setStoredUser(user: User): void {
++    localStorage.setItem(this.userKey, JSON.stringify(user));
++  }
++
++  private removeStoredUser(): void {
++    localStorage.removeItem(this.userKey);
++  }
++
++  private getAuthHeaders(): HttpHeaders {
++    const token = this.getToken();
++    return new HttpHeaders({
++      'Content-Type': 'application/json',
++      'Authorization': token ? `Bearer ${token}` : ''
++    });
++  }
++
+   private setCurrentUser(user: User): void {
+     this.currentUser.set(user);
++    this.currentUserSubject.next(user);
+     this.isAuthenticated.set(true);
+     this.userRole.set(user.role);
++    this.setStoredUser(user);
+   }
+ 
+   private clearCurrentUser(): void {
+     this.currentUser.set(null);
++    this.currentUserSubject.next(null);
+     this.isAuthenticated.set(false);
+     this.userRole.set('');
++    this.removeStoredUser();
++    this.removeToken();
+   }
+ 
+-  login(email: string, password: string): boolean {
+-    try {
+-      const users = this.demoDataService.getUsers();
+-      const user = users.find(u => u.email === email && u.password === password);
+-      
+-      if (user && user.status === 'active') {
+-        // Don't store password in session
+-        const { password: _, ...userWithoutPassword } = user;
+-        this.setCurrentUser(userWithoutPassword as User);
+-        this.localStorageService.setItem('currentUser', userWithoutPassword);
+-        
+-        // Route based on role
+-        this.routeByRole(user.role);
+-        return true;
+-      }
+-      return false;
+-    } catch (error) {
+-      console.error('Login error:', error);
+-      return false;
+-    }
++  login(credentials: LoginRequest): Observable<AuthResponse> {
++    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
++      .pipe(
++        tap(response => {
++          if (response.success && response.token) {
++            this.setToken(response.token);
++            
++            // Create user object from response
++            const user: User = {
++              _id: response._id || '',
++              numericalId: response.numericalId || 0,
++              name: response.name || '',
++              username: response.username || '',
++              email: response.email || '',
++              role: response.role || 'user',
++              status: response.status || 'active',
++              phone: response.phone || '',
++              gender: response.gender || '',
++              dob: response.dob || '',
++              department: response.department || '',
++              team: response.team || null,
++              employeeType: response.employeeType || 'full-time',
++              location: response.location || 'office',
++              joinDate: response.joinDate || '',
++              lastActive: response.lastActive || '',
++              address: response.address || '',
++              about: response.about || '',
++              profileImg: response.profileImg || '',
++              notifications: response.notifications || [],
++              performance: response.performance || { taskCompletion: 0, onTimeDelivery: 0, qualityRating: 0, projects: [] },
++              completionRate: response.completionRate || 0,
++              password: '' // Never store password
++            };
++            
++            this.setCurrentUser(user);
++            this.routeByRole(user.role);
++          }
++        }),
++        catchError(error => {
++          console.error('Login error:', error);
++          return throwError(() => error);
++        })
++      );
+   }
+ 
+-  registerUser(userData: any): boolean {
+-    try {
+-      const users = this.demoDataService.getUsers();
+-      
+-      // Check if user already exists
+-      const existingUser = users.find(u => u.email === userData.email || u.username === userData.username);
+-      if (existingUser) {
+-        return false;
+-      }
+-      
+-      // Create new user
+-      const newUser: User = {
+-        _id: this.generateId(),
+-        numericalId: this.generateNumericalId(),
+-        name: userData.name,
+-        username: userData.username,
+-        email: userData.email,
+-        password: userData.password,
+-        role: userData.role || 'user',
+-        status: 'active',
+-        phone: userData.phone || '',
+-        gender: userData.gender || '',
+-        dob: userData.dob || '',
+-        department: userData.department || '',
+-        team: userData.team || null,
+-        employeeType: userData.employeeType || 'full-time',
+-        location: userData.location || 'office',
+-        joinDate: new Date().toISOString(),
+-        lastActive: new Date().toISOString(),
+-        address: userData.address || '',
+-        about: userData.about || '',
+-        profileImg: userData.profileImg || '',
+-        notifications: [],
+-        performance: {
+-          taskCompletion: 0,
+-          onTimeDelivery: 0,
+-          qualityRating: 0,
+-          projects: []
+-        },
+-        completionRate: 0
+-      };
+-      
+-      // Add to users array
+-      users.push(newUser);
+-      this.localStorageService.setItem('users', users);
+-      
+-      return true;
+-    } catch (error) {
+-      console.error('Registration error:', error);
+-      return false;
+-    }
++  registerUser(userData: RegisterRequest): Observable<AuthResponse> {
++    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, userData)
++      .pipe(
++        tap(response => {
++          if (response.success && response.token) {
++            this.setToken(response.token);
++            
++            // Create user object from response
++            const user: User = {
++              _id: response._id || '',
++              numericalId: response.numericalId || 0,
++              name: response.name || '',
++              username: response.username || '',
++              email: response.email || '',
++              role: response.role || 'user',
++              status: response.status || 'active',
++              phone: '',
++              gender: '',
++              dob: '',
++              department: '',
++              team: null,
++              employeeType: 'full-time',
++              location: 'office',
++              joinDate: new Date().toISOString(),
++              lastActive: new Date().toISOString(),
++              address: '',
++              about: '',
++              profileImg: response.profileImg || '',
++              notifications: [],
++              performance: { taskCompletion: 0, onTimeDelivery: 0, qualityRating: 0, projects: [] },
++              completionRate: 0,
++              password: ''
++            };
++            
++            this.setCurrentUser(user);
++          }
++        }),
++        catchError(error => {
++          console.error('Registration error:', error);
++          return throwError(() => error);
++        })
++      );
++  }
++
++  verifyToken(): Observable<User> {
++    return this.http.get<{ success: boolean; user: User }>(`${this.apiUrl}/auth/me`, {
++      headers: this.getAuthHeaders()
++    }).pipe(
++      map(response => response.user),
++      catchError(error => {
++        console.error('Token verification error:', error);
++        return throwError(() => error);
++      })
++    );
++  }
++
++  updateProfile(profileData: Partial<User>): Observable<AuthResponse> {
++    return this.http.put<AuthResponse>(`${this.apiUrl}/auth/profile`, profileData, {
++      headers: this.getAuthHeaders()
++    }).pipe(
++      tap(response => {
++        if (response.success && response.user) {
++          this.setCurrentUser(response.user);
++        }
++      }),
++      catchError(error => {
++        console.error('Profile update error:', error);
++        return throwError(() => error);
++      })
++    );
++  }
++
++  changePassword(currentPassword: string, newPassword: string): Observable<AuthResponse> {
++    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/change-password`, {
++      currentPassword,
++      newPassword
++    }, {
++      headers: this.getAuthHeaders()
++    }).pipe(
++      catchError(error => {
++        console.error('Password change error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+   logout(): void {
+     this.clearCurrentUser();
+-    this.localStorageService.removeItem('currentUser');
+-    this.sessionStorageService.clear();
+     this.router.navigate(['/auth/login']);
+   }
+ 
+@@ .. @@
+   }
+ 
+   // Admin methods for user management
+-  adminGetAllUsers(): User[] {
+-    return this.demoDataService.getUsers();
++  adminGetAllUsers(params?: any): Observable<{ success: boolean; data: User[]; pagination?: any }> {
++    let queryParams = '';
++    if (params) {
++      const searchParams = new URLSearchParams(params);
++      queryParams = '?' + searchParams.toString();
++    }
++    
++    return this.http.get<{ success: boolean; data: User[]; pagination?: any }>(
++      `${this.apiUrl}/admin/users${queryParams}`,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Get users error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  adminCreateUser(userData: any): boolean {
+-    return this.registerUser(userData);
++  adminGetUserById(id: string): Observable<{ success: boolean; data: User }> {
++    return this.http.get<{ success: boolean; data: User }>(
++      `${this.apiUrl}/admin/users/${id}`,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Get user error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  adminUpdateUser(userId: string, userData: Partial<User>): boolean {
+-    try {
+-      const users = this.demoDataService.getUsers();
+-      const userIndex = users.findIndex(u => u._id === userId);
+-      
+-      if (userIndex !== -1) {
+-        users[userIndex] = { ...users[userIndex], ...userData };
+-        this.localStorageService.setItem('users', users);
+-        
+-        // Update current user if it's the same user
+-        if (this.currentUser()?._id === userId) {
+-          this.setCurrentUser(users[userIndex]);
+-        }
+-        
+-        return true;
+-      }
+-      return false;
+-    } catch (error) {
+-      console.error('Update user error:', error);
+-      return false;
+-    }
++  adminCreateUser(userData: RegisterRequest): Observable<{ success: boolean; message: string; data: User }> {
++    return this.http.post<{ success: boolean; message: string; data: User }>(
++      `${this.apiUrl}/admin/users`,
++      userData,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Create user error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  adminDeleteUser(userId: string): boolean {
+-    try {
+-      const users = this.demoDataService.getUsers();
+-      const userIndex = users.findIndex(u => u._id === userId);
+-      
+-      if (userIndex !== -1) {
+-        users.splice(userIndex, 1);
+-        this.localStorageService.setItem('users', users);
+-        return true;
+-      }
+-      return false;
+-    } catch (error) {
+-      console.error('Delete user error:', error);
+-      return false;
+-    }
++  adminUpdateUser(userId: string, userData: Partial<User>): Observable<{ success: boolean; message: string; data: User }> {
++    return this.http.put<{ success: boolean; message: string; data: User }>(
++      `${this.apiUrl}/admin/users/${userId}`,
++      userData,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      tap(response => {
++        // Update current user if it's the same user
++        if (response.success && this.currentUser()?._id === userId) {
++          this.setCurrentUser(response.data);
++        }
++      }),
++      catchError(error => {
++        console.error('Update user error:', error);
++        return throwError(() => error);
++      })
++    );
++  }
++
++  adminDeleteUser(userId: string): Observable<{ success: boolean; message: string }> {
++    return this.http.delete<{ success: boolean; message: string }>(
++      `${this.apiUrl}/admin/users/${userId}`,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Delete user error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+   // Team management methods
+-  adminGetAllTeams(): any[] {
+-    return this.demoDataService.getTeams();
++  adminGetAllTeams(params?: any): Observable<{ success: boolean; data: any[]; pagination?: any }> {
++    let queryParams = '';
++    if (params) {
++      const searchParams = new URLSearchParams(params);
++      queryParams = '?' + searchParams.toString();
++    }
++    
++    return this.http.get<{ success: boolean; data: any[]; pagination?: any }>(
++      `${this.apiUrl}/admin/teams${queryParams}`,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Get teams error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  adminCreateTeam(teamData: any): boolean {
+-    try {
+-      const teams = this.demoDataService.getTeams();
+-      const newTeam = {
+-        _id: this.generateId(),
+-        ...teamData,
+-        createdAt: new Date().toISOString(),
+-        updatedAt: new Date().toISOString()
+-      };
+-      
+-      teams.push(newTeam);
+-      this.localStorageService.setItem('teams', teams);
+-      return true;
+-    } catch (error) {
+-      console.error('Create team error:', error);
+-      return false;
+-    }
++  adminGetTeamById(id: string): Observable<{ success: boolean; data: any }> {
++    return this.http.get<{ success: boolean; data: any }>(
++      `${this.apiUrl}/admin/teams/${id}`,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Get team error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  adminUpdateTeam(teamId: string, teamData: any): boolean {
+-    try {
+-      const teams = this.demoDataService.getTeams();
+-      const teamIndex = teams.findIndex(t => t._id === teamId);
+-      
+-      if (teamIndex !== -1) {
+-        teams[teamIndex] = { 
+-          ...teams[teamIndex], 
+-          ...teamData,
+-          updatedAt: new Date().toISOString()
+-        };
+-        this.localStorageService.setItem('teams', teams);
+-        return true;
+-      }
+-      return false;
+-    } catch (error) {
+-      console.error('Update team error:', error);
+-      return false;
+-    }
++  adminCreateTeam(teamData: any): Observable<{ success: boolean; message: string; data: any }> {
++    return this.http.post<{ success: boolean; message: string; data: any }>(
++      `${this.apiUrl}/admin/teams`,
++      teamData,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Create team error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  adminDeleteTeam(teamId: string): boolean {
+-    try {
+-      const teams = this.demoDataService.getTeams();
+-      const teamIndex = teams.findIndex(t => t._id === teamId);
+-      
+-      if (teamIndex !== -1) {
+-        teams.splice(teamIndex, 1);
+-        this.localStorageService.setItem('teams', teams);
+-        return true;
+-      }
+-      return false;
+-    } catch (error) {
+-      console.error('Delete team error:', error);
+-      return false;
+-    }
++  adminUpdateTeam(teamId: string, teamData: any): Observable<{ success: boolean; message: string; data: any }> {
++    return this.http.put<{ success: boolean; message: string; data: any }>(
++      `${this.apiUrl}/admin/teams/${teamId}`,
++      teamData,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Update team error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  // Utility methods
+-  private generateId(): string {
+-    return Math.random().toString(36).substr(2, 9);
++  adminDeleteTeam(teamId: string): Observable<{ success: boolean; message: string }> {
++    return this.http.delete<{ success: boolean; message: string }>(
++      `${this.apiUrl}/admin/teams/${teamId}`,
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Delete team error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ 
+-  private generateNumericalId(): number {
+-    const users = this.demoDataService.getUsers();
+-    const maxId = Math.max(...users.map(u => u.numericalId), 1000);
+-    return maxId + 1;
++  adminAddTeamMembers(teamId: string, memberIds: string[]): Observable<{ success: boolean; message: string; data: any }> {
++    return this.http.put<{ success: boolean; message: string; data: any }>(
++      `${this.apiUrl}/admin/teams/${teamId}/add-members`,
++      { memberIds },
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Add team members error:', error);
++        return throwError(() => error);
++      })
++    );
++  }
++
++  adminRemoveTeamMembers(teamId: string, memberIds: string[]): Observable<{ success: boolean; message: string; data: any }> {
++    return this.http.put<{ success: boolean; message: string; data: any }>(
++      `${this.apiUrl}/admin/teams/${teamId}/remove-members`,
++      { memberIds },
++      { headers: this.getAuthHeaders() }
++    ).pipe(
++      catchError(error => {
++        console.error('Remove team members error:', error);
++        return throwError(() => error);
++      })
++    );
+   }
+ }
